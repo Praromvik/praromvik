@@ -1,0 +1,23 @@
+# Sign up endpoint
+POST http://localhost:3030/signup
+Content-Type: application/json
+
+{
+  "first_name": "anisur",
+  "last_name": "rahman",
+  "user_name": "anisurrahman75",
+  "password": "123",
+  "phone": "+8801540179777",
+  "email": "sunny.cse7575@gmail.com"
+}
+###
+
+# SignIn endpoint
+POST http://localhost:3030/signin
+Content-Type: application/json
+
+{
+  "user_name": "anisurrahman75",
+  "password": "123"
+}
+

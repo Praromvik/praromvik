@@ -23,3 +23,66 @@ SOFTWARE.
 */
 
 package handlers
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"github.com/praromvik/praromvik/api"
+	"github.com/praromvik/praromvik/pkg/auth"
+)
+
+type User struct {
+	*api.User
+}
+
+func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		w.WriteHeader(http.StatusOK)
+	case http.MethodPost:
+		var formData User
+		if err := json.NewDecoder(r.Body).Decode(&formData); err != nil {
+			http.Error(w, "Error parsing JSON", http.StatusBadRequest)
+			return
+		}
+		fmt.Println(formData.User)
+		w.WriteHeader(http.StatusOK)
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
+func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		w.WriteHeader(http.StatusOK)
+	case http.MethodPost:
+		var formData User
+		if err := json.NewDecoder(r.Body).Decode(&formData); err != nil {
+			http.Error(w, "Error parsing JSON", http.StatusBadRequest)
+			return
+		}
+		fmt.Println(formData.User)
+		if formData.Valid() {
+			if err := auth.GenerateJWTAndSetCookie(w, formData.User); err != nil {
+				http.Error(w, fmt.Sprintf("Failed to set JWT token in cookie. %s", err), http.StatusBadRequest)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusOK)
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
+func (u *User) Valid() bool {
+	// TODO
+	return true
+}
+
+func (u *User) SignOut(writer http.ResponseWriter, request *http.Request) {
+	auth.UnsetJWTInCookie(writer, request)
+	// http.Redirect(writer, request, "/signin", http.StatusSeeOther)
+}

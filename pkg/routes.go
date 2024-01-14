@@ -25,9 +25,11 @@ SOFTWARE.
 package pkg
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/praromvik/praromvik/handlers"
+	"github.com/praromvik/praromvik/pkg/auth"
 	"github.com/praromvik/praromvik/pkg/middileware"
 
 	"github.com/go-chi/chi/v5"
@@ -42,8 +44,24 @@ func LoadRoutes() *chi.Mux {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	router.Route("/courses", loadOrderRoutes)
+	router.Group(func(r chi.Router) {
+		userHandler := &handlers.User{}
+		r.HandleFunc("/signup", userHandler.SignUp)
+		r.HandleFunc("/signin", userHandler.SignIn)
+	})
 
+	router.Group(func(r chi.Router) {
+		userHandler := &handlers.User{}
+		r.Use(auth.VerifyJWT)
+		r.HandleFunc("/courses", func(writer http.ResponseWriter, request *http.Request) {
+			fmt.Print("-----------Access all courses with JWT authentication------------")
+			writer.WriteHeader(http.StatusOK)
+		})
+
+		r.HandleFunc("/signout", userHandler.SignOut)
+	})
+
+	router.Route("/courses", loadOrderRoutes)
 	return router
 }
 

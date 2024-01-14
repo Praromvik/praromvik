@@ -1,7 +1,7 @@
 /*
 MIT License
 
-# Copyright (c) 2024 Praromvik
+Copyright (c) 2024 Praromvik
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,26 +21,38 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package main
+
+package cmd
 
 import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/cobra"
 )
 
-func init() {
-	flag.IntVar(&port, "port", 3000, "server port to listen")
+// startServerCmd represents the startServer command
+var startServerCmd = &cobra.Command{
+	Use:   "startServer",
+	Short: "Initialize and start the server to handle incoming requests",
+	Run: func(cmd *cobra.Command, args []string) {
+		flag.Parse()
+		server := New()
+		if err := server.Start(context.TODO()); err != nil {
+			fmt.Println("failed to start server:", err)
+		}
+	},
 }
 
-var port int
+var port string
 
-func main() {
-	flag.Parse()
-	app := New()
-
-	err := app.Start(context.TODO())
-	if err != nil {
-		fmt.Println("failed to start app:", err)
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Error getting env, %v", err)
 	}
+	rootCmd.AddCommand(startServerCmd)
+	startServerCmd.PersistentFlags().StringVarP(&port, "port", "p", "3030", "Set server listening port address.")
 }

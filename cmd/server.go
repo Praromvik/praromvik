@@ -22,10 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package main
+package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -37,18 +38,18 @@ import (
 	"github.com/praromvik/praromvik/pkg"
 )
 
-type App struct {
+type Server struct {
 	router http.Handler
 }
 
-func New() *App {
-	app := &App{
+func New() *Server {
+	app := &Server{
 		router: pkg.LoadRoutes(),
 	}
 	return app
 }
 
-func (a *App) Start(ctx context.Context) error {
+func (a *Server) Start(ctx context.Context) error {
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%v", port),
 		Handler: a.router,
@@ -68,7 +69,7 @@ func (a *App) Start(ctx context.Context) error {
 
 		go func() {
 			<-shutdownCtx.Done()
-			if shutdownCtx.Err() == context.DeadlineExceeded {
+			if errors.Is(shutdownCtx.Err(), context.DeadlineExceeded) {
 				log.Fatal("graceful shutdown timed out.. forcing exit.")
 			}
 		}()
