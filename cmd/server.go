@@ -36,17 +36,27 @@ import (
 	"time"
 
 	"github.com/praromvik/praromvik/pkg"
+	fdb "github.com/praromvik/praromvik/pkg/db/firestore"
+
+	"cloud.google.com/go/firestore"
 )
 
 type Server struct {
 	router http.Handler
+	client *firestore.Client
 }
 
-func New() *Server {
-	app := &Server{
-		router: pkg.LoadRoutes(),
+func New(ctx context.Context) (*Server, error) {
+	fClient, err := fdb.FireStoreConnect(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get firestore client: %v", err)
 	}
-	return app
+
+	app := &Server{
+		router: pkg.LoadRoutes(fClient),
+		client: fClient,
+	}
+	return app, nil
 }
 
 func (a *Server) Start(ctx context.Context) error {

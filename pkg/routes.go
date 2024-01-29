@@ -25,52 +25,38 @@ SOFTWARE.
 package pkg
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/praromvik/praromvik/handlers"
+	"github.com/praromvik/praromvik/handlers/course"
+	"github.com/praromvik/praromvik/handlers/user"
 	"github.com/praromvik/praromvik/pkg/auth"
-	"github.com/praromvik/praromvik/pkg/middileware"
+	middleware "github.com/praromvik/praromvik/pkg/middileware"
 
+	"cloud.google.com/go/firestore"
 	"github.com/go-chi/chi/v5"
 )
 
-func LoadRoutes() *chi.Mux {
+func LoadRoutes(fClient *firestore.Client) *chi.Mux {
 	router := chi.NewRouter()
-	middileware.AddMiddlewares(router)
-
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello\n"))
-		w.WriteHeader(http.StatusOK)
-	})
+	middleware.AddMiddlewares(router)
 
 	router.Group(func(r chi.Router) {
-		userHandler := &handlers.User{}
+		userHandler := &user.User{FClient: fClient}
 		r.HandleFunc("/signup", userHandler.SignUp)
 		r.HandleFunc("/signin", userHandler.SignIn)
 	})
-
-	router.Group(func(r chi.Router) {
-		userHandler := &handlers.User{}
-		r.Use(auth.VerifyJWT)
-		r.HandleFunc("/courses", func(writer http.ResponseWriter, request *http.Request) {
-			fmt.Print("-----------Access all courses with JWT authentication------------")
-			writer.WriteHeader(http.StatusOK)
-		})
-
-		r.HandleFunc("/signout", userHandler.SignOut)
-	})
-
 	router.Route("/courses", loadOrderRoutes)
 	return router
 }
 
-func loadOrderRoutes(router chi.Router) {
-	courseHandler := &handlers.Course{}
+func loadOrderRoutes(r chi.Router) {
+	r.Use(auth.VerifyJWT)
+	r.HandleFunc("/courses", func(writer http.ResponseWriter, request *http.Request) {})
+	courseHandler := &course.Course{}
 
-	router.Post("/", courseHandler.Create)
-	router.Get("/", courseHandler.List)
-	router.Get("/{id}", courseHandler.GetByID)
-	router.Put("/{id}", courseHandler.UpdateByID)
-	router.Delete("/{id}", courseHandler.DeleteByID)
+	r.Post("/", courseHandler.Create)
+	r.Get("/", courseHandler.List)
+	r.Get("/{id}", courseHandler.GetByID)
+	r.Put("/{id}", courseHandler.UpdateByID)
+	r.Delete("/{id}", courseHandler.DeleteByID)
 }

@@ -76,19 +76,18 @@ func VerifyJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		cookie, err := request.Cookie(cookieName)
 		if err != nil {
-			fmt.Println(err)
-			writer.WriteHeader(http.StatusUnauthorized)
+			api.HandleError(writer, http.StatusUnauthorized, "", err)
 			return
 		}
-		if err := ValidateToken(cookie.Value); err != nil {
-			writer.WriteHeader(http.StatusUnauthorized)
+		if err := validateToken(cookie.Value); err != nil {
+			api.HandleError(writer, http.StatusUnauthorized, "failed to validate jwt token", err)
 		} else {
 			next.ServeHTTP(writer, request)
 		}
 	})
 }
 
-func ValidateToken(signedToken string) error {
+func validateToken(signedToken string) error {
 	token, err := jwt.ParseWithClaims(
 		signedToken,
 		&jwtClaim{},

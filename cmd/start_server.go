@@ -40,8 +40,14 @@ var startServerCmd = &cobra.Command{
 	Short: "Initialize and start the server to handle incoming requests",
 	Run: func(cmd *cobra.Command, args []string) {
 		flag.Parse()
-		server := New()
-		if err := server.Start(context.TODO()); err != nil {
+		ctx := context.Background()
+
+		server, err := New(ctx)
+		if err != nil {
+			log.Printf("failed to get new server instance: %v \n", err)
+			return
+		}
+		if err := server.Start(ctx); err != nil {
 			fmt.Println("failed to start server:", err)
 		}
 	},
