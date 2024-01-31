@@ -31,6 +31,7 @@ import (
 	"github.com/praromvik/praromvik/api"
 	"github.com/praromvik/praromvik/pkg/auth"
 	fdb "github.com/praromvik/praromvik/pkg/db/firestore"
+	"github.com/praromvik/praromvik/pkg/error"
 
 	"cloud.google.com/go/firestore"
 	"github.com/google/uuid"
@@ -44,59 +45,50 @@ type User struct {
 }
 
 func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		w.WriteHeader(http.StatusOK)
-	case http.MethodPost:
+	if r.Method == http.MethodPost {
 		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
-			api.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
 		if !u.validate(w) {
 			return
 		}
-
 		u.UUID = uuid.NewString()
 		if err := fdb.AddFormData(u.FClient, u.User); err != nil {
-			api.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
+			error.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
 		}
 		w.WriteHeader(http.StatusOK)
-	default:
+	} else {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 }
 
 func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		w.WriteHeader(http.StatusOK)
-	case http.MethodPost:
+	if r.Method == http.MethodPost {
 		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
-			api.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
-
 		valid, err := u.verify()
 		if err != nil && status.Code(err) != codes.NotFound {
-			api.HandleError(w, http.StatusUnauthorized, "failed to login", err)
+			error.HandleError(w, http.StatusUnauthorized, "failed to login", err)
 			return
 		}
 
 		if valid {
 			if err := auth.GenerateJWTAndSetCookie(w, u.User); err != nil {
-				api.HandleError(w, http.StatusBadRequest, "failed to set JWT token in cookie", err)
+				error.HandleError(w, http.StatusBadRequest, "failed to set JWT token in cookie", err)
 				return
 			}
 		} else {
-			api.HandleError(w, http.StatusUnauthorized, "invalid username or password", nil)
+			error.HandleError(w, http.StatusUnauthorized, "invalid username or password", nil)
 		}
 		w.WriteHeader(http.StatusOK)
-	default:
+	} else {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 }
 
 func (u *User) SignOut(writer http.ResponseWriter, request *http.Request) {
 	auth.UnsetJWTInCookie(writer, request)
-	// http.Redirect(writer, request, "/signin", http.StatusSeeOther)
 }

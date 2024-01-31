@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/praromvik/praromvik/api"
+	error2 "github.com/praromvik/praromvik/pkg/error"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -76,11 +77,11 @@ func VerifyJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		cookie, err := request.Cookie(cookieName)
 		if err != nil {
-			api.HandleError(writer, http.StatusUnauthorized, "", err)
+			error2.HandleError(writer, http.StatusUnauthorized, "", err)
 			return
 		}
 		if err := validateToken(cookie.Value); err != nil {
-			api.HandleError(writer, http.StatusUnauthorized, "failed to validate jwt token", err)
+			error2.HandleError(writer, http.StatusUnauthorized, "failed to validate jwt token", err)
 		} else {
 			next.ServeHTTP(writer, request)
 		}

@@ -25,8 +25,6 @@ SOFTWARE.
 package pkg
 
 import (
-	"net/http"
-
 	"github.com/praromvik/praromvik/handlers/course"
 	"github.com/praromvik/praromvik/handlers/user"
 	"github.com/praromvik/praromvik/pkg/auth"
@@ -44,16 +42,15 @@ func LoadRoutes(fClient *firestore.Client) *chi.Mux {
 		userHandler := &user.User{FClient: fClient}
 		r.HandleFunc("/signup", userHandler.SignUp)
 		r.HandleFunc("/signin", userHandler.SignIn)
+		r.HandleFunc("/signout", userHandler.SignOut)
 	})
-	router.Route("/courses", loadOrderRoutes)
+	router.Route("/courses", loadCourseRoutes)
 	return router
 }
 
-func loadOrderRoutes(r chi.Router) {
+func loadCourseRoutes(r chi.Router) {
 	r.Use(auth.VerifyJWT)
-	r.HandleFunc("/courses", func(writer http.ResponseWriter, request *http.Request) {})
 	courseHandler := &course.Course{}
-
 	r.Post("/", courseHandler.Create)
 	r.Get("/", courseHandler.List)
 	r.Get("/{id}", courseHandler.GetByID)

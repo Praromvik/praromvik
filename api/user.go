@@ -25,12 +25,10 @@ SOFTWARE.
 package api
 
 type User struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	UserName  string `json:"user_name"`
-	Password  string `json:"password"`
-	Phone     string `json:"phone"`
-	UUID      string
-	Role      string
+	UserName string `json:"userName"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Phone    string `json:"phone"`
+	UUID     string
+	Role     string
 }

@@ -1,7 +1,7 @@
 /*
 MIT License
 
-# Copyright (c) 2024 Praromvik
+Copyright (c) 2024 Praromvik
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,4 +22,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package auth
+package error
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
+
+func HandleError(w http.ResponseWriter, code int, message string, err error) {
+	var httpErr error
+	if err == nil {
+		httpErr = fmt.Errorf("%s", message)
+	} else {
+		if message == "" {
+			httpErr = fmt.Errorf("%v", err.Error())
+		} else {
+			httpErr = fmt.Errorf("%s. Reason %v", message, err.Error())
+		}
+	}
+	log.Printf(httpErr.Error())
+	http.Error(w, httpErr.Error(), code)
+}
