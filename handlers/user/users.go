@@ -28,9 +28,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/praromvik/praromvik/api"
+	"github.com/praromvik/praromvik/models/user"
 	"github.com/praromvik/praromvik/pkg/auth"
-	fdb "github.com/praromvik/praromvik/pkg/db/firestore"
 	"github.com/praromvik/praromvik/pkg/error"
 
 	"cloud.google.com/go/firestore"
@@ -41,7 +40,7 @@ import (
 
 type User struct {
 	FClient *firestore.Client
-	*api.User
+	*user.User
 }
 
 func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +53,7 @@ func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		u.UUID = uuid.NewString()
-		if err := fdb.AddFormData(u.FClient, u.User); err != nil {
+		if err := user.AddFormData(u.FClient, u.User); err != nil {
 			error.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
 		}
 		w.WriteHeader(http.StatusOK)

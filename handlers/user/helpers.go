@@ -27,7 +27,7 @@ package user
 import (
 	"net/http"
 
-	fdb "github.com/praromvik/praromvik/pkg/db/firestore"
+	"github.com/praromvik/praromvik/models/user"
 	error2 "github.com/praromvik/praromvik/pkg/error"
 )
 
@@ -42,7 +42,7 @@ func (u *User) validate(w http.ResponseWriter) bool {
 }
 
 func (u *User) verify() (bool, error) {
-	valid, err := fdb.VerifyLoginData(u.FClient, u.User)
+	valid, err := user.VerifyLoginData(u.FClient, u.User)
 	if err != nil {
 		return false, err
 	}
