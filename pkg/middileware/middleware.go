@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package middileware
+package middleware
 
 import (
 	"github.com/go-chi/chi/v5"
@@ -30,6 +30,8 @@ import (
 )
 
 func AddMiddlewares(router *chi.Mux) {
+	router.Use(middleware.RequestID)
+	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 	router.Use(middleware.RequestID)

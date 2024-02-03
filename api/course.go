@@ -24,4 +24,39 @@ SOFTWARE.
 
 package api
 
-type Course struct{}
+import (
+	"google.golang.org/genproto/googleapis/type/date"
+)
+
+type Course struct {
+	CourseId           string       `json:"courseId"`
+	Title              string       `json:"title"`
+	Description        string       `json:"description"`
+	Instructors        []Instructor `json:"instructors"`
+	StartDate          date.Date    `json:"startDate"`
+	EndDate            date.Date    `json:"endDate"`
+	Duration           int          `json:"duration"` // Duration in week
+	EnrollmentCapacity int          `json:"enrollmentCapacity"`
+	EnrollmentStudents []User       `json:"enrollmentStudents"`
+	Lessons            []Lesson     `json:"lessons"`
+}
+
+type Lesson struct {
+	LessonId string `json:"lessonId"`
+	Title    string `json:"title"`
+	Content  string `json:"content"`
+	// resources []resource `json:"resources"`
+	Quizzes []Quiz `json:"quizzes"`
+}
+
+type Quiz struct {
+	QuizId    string     `json:"quizId"`
+	Questions []Question `json:"questions"`
+}
+
+type Question struct {
+	QuestionId    string   `json:"QuestionId"`
+	Ques          string   `json:"ques"`
+	Options       []string `json:"options"`
+	CorrectOption string   `json:"correctOption"`
+}

@@ -25,34 +25,35 @@ SOFTWARE.
 package pkg
 
 import (
-	"net/http"
+	"github.com/praromvik/praromvik/handlers/course"
+	"github.com/praromvik/praromvik/handlers/user"
+	"github.com/praromvik/praromvik/pkg/auth"
+	middleware "github.com/praromvik/praromvik/pkg/middileware"
 
-	"github.com/praromvik/praromvik/handlers"
-	"github.com/praromvik/praromvik/pkg/middileware"
-
+	"cloud.google.com/go/firestore"
 	"github.com/go-chi/chi/v5"
 )
 
-func LoadRoutes() *chi.Mux {
+func LoadRoutes(fClient *firestore.Client) *chi.Mux {
 	router := chi.NewRouter()
-	middileware.AddMiddlewares(router)
+	middleware.AddMiddlewares(router)
 
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello\n"))
-		w.WriteHeader(http.StatusOK)
+	router.Group(func(r chi.Router) {
+		userHandler := &user.User{FClient: fClient}
+		r.HandleFunc("/signup", userHandler.SignUp)
+		r.HandleFunc("/signin", userHandler.SignIn)
+		r.HandleFunc("/signout", userHandler.SignOut)
 	})
-
-	router.Route("/courses", loadOrderRoutes)
-
+	router.Route("/courses", loadCourseRoutes)
 	return router
 }
 
-func loadOrderRoutes(router chi.Router) {
-	courseHandler := &handlers.Course{}
-
-	router.Post("/", courseHandler.Create)
-	router.Get("/", courseHandler.List)
-	router.Get("/{id}", courseHandler.GetByID)
-	router.Put("/{id}", courseHandler.UpdateByID)
-	router.Delete("/{id}", courseHandler.DeleteByID)
+func loadCourseRoutes(r chi.Router) {
+	r.Use(auth.VerifyJWT)
+	courseHandler := &course.Course{}
+	r.Post("/", courseHandler.Create)
+	r.Get("/", courseHandler.List)
+	r.Get("/{id}", courseHandler.GetByID)
+	r.Put("/{id}", courseHandler.UpdateByID)
+	r.Delete("/{id}", courseHandler.DeleteByID)
 }
