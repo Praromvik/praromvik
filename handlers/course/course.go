@@ -28,11 +28,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/praromvik/praromvik/api"
+	"github.com/praromvik/praromvik/models/course"
 )
 
 type Course struct {
-	*api.Course
+	*course.Course
 }
 
 func (o *Course) Create(w http.ResponseWriter, r *http.Request) {

@@ -30,7 +30,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/praromvik/praromvik/api"
+	"github.com/praromvik/praromvik/models/user"
 	error2 "github.com/praromvik/praromvik/pkg/error"
 
 	"github.com/golang-jwt/jwt"
@@ -47,7 +47,7 @@ type jwtClaim struct {
 	jwt.StandardClaims
 }
 
-func GenerateJWTAndSetCookie(w http.ResponseWriter, user *api.User) error {
+func GenerateJWTAndSetCookie(w http.ResponseWriter, user *user.User) error {
 	str, err := generateJWT(user)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func GenerateJWTAndSetCookie(w http.ResponseWriter, user *api.User) error {
 	return nil
 }
 
-func generateJWT(user *api.User) (tokenString string, err error) {
+func generateJWT(user *user.User) (tokenString string, err error) {
 	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &jwtClaim{
 		Email:    user.Email,
