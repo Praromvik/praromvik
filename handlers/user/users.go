@@ -53,7 +53,8 @@ func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		u.UUID = uuid.NewString()
-		if err := user.AddFormData(u.FClient, u.User); err != nil {
+		u.Role = "student"
+		if err := u.User.AddFormDataToMongo(); err != nil {
 			error.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
 		}
 		w.WriteHeader(http.StatusOK)
@@ -73,14 +74,12 @@ func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
 			error.HandleError(w, http.StatusUnauthorized, "failed to login", err)
 			return
 		}
-
-		if valid {
-			if err := auth.GenerateJWTAndSetCookie(w, u.User); err != nil {
-				error.HandleError(w, http.StatusBadRequest, "failed to set JWT token in cookie", err)
-				return
-			}
-		} else {
+		if !valid {
 			error.HandleError(w, http.StatusUnauthorized, "invalid username or password", nil)
+		}
+		if err := auth.StoreAuthenticated(w, r, u.User, true); err != nil {
+			error.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
+			return
 		}
 		w.WriteHeader(http.StatusOK)
 	} else {

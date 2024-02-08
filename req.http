@@ -3,7 +3,7 @@ POST http://localhost:3030/signup
 Content-Type: application/json
 
 {
-  "user_name": "anisurrahman75",
+  "user_name": "student-1",
   "password": "123",
   "phone": "+8801540179777",
   "email": "sunny.cse7575@gmail.com"
