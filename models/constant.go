@@ -22,4 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package course
+package models
+
+type RoleType string
+
+const (
+	Admin     RoleType = "Admin"
+	Moderator RoleType = "Moderator"
+	Trainer   RoleType = "Trainer"
+	Student   RoleType = "Student"
+)
+
+const (
+	Role = "Role"
+)

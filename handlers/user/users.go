@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/praromvik/praromvik/models"
 	"github.com/praromvik/praromvik/models/user"
 	"github.com/praromvik/praromvik/pkg/auth"
 	"github.com/praromvik/praromvik/pkg/error"
@@ -53,7 +54,7 @@ func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		u.UUID = uuid.NewString()
-		u.Role = "student"
+		u.Role = string(models.Student)
 		if err := u.User.AddFormDataToMongo(); err != nil {
 			error.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
 		}
@@ -87,6 +88,9 @@ func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u *User) SignOut(writer http.ResponseWriter, request *http.Request) {
-	auth.UnsetJWTInCookie(writer, request)
+func (u *User) SignOut(w http.ResponseWriter, r *http.Request) {
+	if err := auth.StoreAuthenticated(w, r, u.User, false); err != nil {
+		error.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
+		return
+	}
 }

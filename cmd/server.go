@@ -65,7 +65,8 @@ func (a *Server) Start(ctx context.Context) error {
 		<-sig
 
 		// Shutdown signal with grace period of 30 seconds
-		shutdownCtx, _ := context.WithTimeout(serverCtx, 10*time.Second)
+		shutdownCtx, cancelShutdown := context.WithTimeout(serverCtx, 10*time.Second)
+		defer cancelShutdown()
 
 		go func() {
 			<-shutdownCtx.Done()

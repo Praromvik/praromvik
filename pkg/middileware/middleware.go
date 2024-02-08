@@ -25,9 +25,9 @@ SOFTWARE.
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/praromvik/praromvik/models"
 	"github.com/praromvik/praromvik/pkg/auth"
 	"github.com/praromvik/praromvik/pkg/error"
 
@@ -46,40 +46,66 @@ func SecurityMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		valid, err := auth.SessionValid(r)
 		if err != nil {
-			error.HandleError(w, http.StatusUnauthorized, "failed to validate jwt token", err)
+			error.HandleError(w, http.StatusUnauthorized, "Failed to validate session: "+err.Error(), err)
 			return
 		}
 		if !valid {
-			error.HandleError(w, http.StatusUnauthorized, "failed to validate jwt token", err)
+			error.HandleError(w, http.StatusUnauthorized, "Invalid session token", err)
 			return
 		}
-
-		// if it does have a valid session make sure it has been authenticated
 		authenticated, err := auth.IsAuthenticated(r)
 		if err != nil {
-			error.HandleError(w, http.StatusUnauthorized, "failed to validate jwt token", err)
+			error.HandleError(w, http.StatusUnauthorized, "Failed to check authentication status: "+err.Error(), err)
 			return
 		}
 
 		if !authenticated {
-			error.HandleError(w, http.StatusUnauthorized, "failed to validate jwt token", err)
+			error.HandleError(w, http.StatusUnauthorized, "Unauthenticated session token", err)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
 }
 
-func AdminOrModeratorAccess(next http.Handler) http.Handler {
+func AdminAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		fmt.Println("---------------AdminOrModerator-----------")
-		authenticated, err := auth.IsAdminOrModeratorAuthenticated(request)
+		roleType, err := auth.GetSessionRole(request)
 		if err != nil {
-			error.HandleError(writer, http.StatusUnauthorized, "failed to validate jwt token admin", err)
+			error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
 			return
 		}
-		fmt.Println("auth:", authenticated)
-		if !authenticated {
-			error.HandleError(writer, http.StatusUnauthorized, "failed to validate jwt token admin", err)
+		if roleType == models.Admin {
+			error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges. Admin or Moderator access required", err)
+			return
+		}
+		next.ServeHTTP(writer, request)
+	})
+}
+
+func AdminOrModeratorAccess(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		roleType, err := auth.GetSessionRole(request)
+		if err != nil {
+			error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
+			return
+		}
+		if roleType == models.Admin || roleType == models.Moderator {
+			error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges. Admin or Moderator access required", err)
+			return
+		}
+		next.ServeHTTP(writer, request)
+	})
+}
+
+func ModeratorAccess(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		roleType, err := auth.GetSessionRole(request)
+		if err != nil {
+			error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
+			return
+		}
+		if roleType == models.Moderator {
+			error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges. Admin or Moderator access required", err)
 			return
 		}
 		next.ServeHTTP(writer, request)

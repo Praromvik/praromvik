@@ -48,11 +48,11 @@ func loadUserAuthRoutes(r chi.Router) {
 }
 
 func loadCourseRoutes(r chi.Router) {
-	r.Use(middleware.SecurityMiddleware)
 	courseHandler := &course.Course{}
-	r.With(middleware.AdminOrModeratorAccess).Post("/", courseHandler.Create)
+	r.Use(middleware.SecurityMiddleware)
 	r.Get("/", courseHandler.List)
 	r.Get("/{id}", courseHandler.GetByID)
-	r.Put("/{id}", courseHandler.UpdateByID)
-	r.Delete("/{id}", courseHandler.DeleteByID)
+	r.With(middleware.AdminOrModeratorAccess).Post("/", courseHandler.Create)
+	r.With(middleware.AdminOrModeratorAccess).Put("/{id}", courseHandler.UpdateByID)
+	r.With(middleware.AdminAccess).Delete("/{id}", courseHandler.DeleteByID)
 }

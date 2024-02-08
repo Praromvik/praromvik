@@ -26,18 +26,11 @@ package user
 
 import (
 	"net/http"
-
-	error2 "github.com/praromvik/praromvik/pkg/error"
 )
 
 func (u *User) validate(w http.ResponseWriter) bool {
-	var valid bool
-	valid = true
 	// TODO
-	if !valid {
-		error2.HandleError(w, http.StatusConflict, "account with this email address already exists", nil)
-	}
-	return valid
+	return true
 }
 
 func (u *User) verify() (bool, error) {

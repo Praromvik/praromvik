@@ -25,6 +25,7 @@ SOFTWARE.
 package error
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -32,15 +33,18 @@ import (
 
 func HandleError(w http.ResponseWriter, code int, message string, err error) {
 	var httpErr error
+
 	if err == nil {
-		httpErr = fmt.Errorf("%s", message)
+		httpErr = errors.New(message)
 	} else {
+		errMsg := err.Error()
 		if message == "" {
-			httpErr = fmt.Errorf("%v", err.Error())
+			httpErr = errors.New(errMsg)
 		} else {
-			httpErr = fmt.Errorf("%s. Reason %v", message, err.Error())
+			httpErr = fmt.Errorf("%s. Reason: %s", message, errMsg)
 		}
 	}
-	log.Printf(httpErr.Error())
+
+	log.Print(httpErr)
 	http.Error(w, httpErr.Error(), code)
 }
