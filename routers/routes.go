@@ -33,13 +33,17 @@ import (
 
 func LoadRoutes() *chi.Mux {
 	router := chi.NewRouter()
+	// Apply global middleware
 	middleware.AddMiddlewares(router)
+
 	router.Group(func(r chi.Router) {
 		loadUserAuthRoutes(r)
 	})
+
 	router.Route("/courses", loadCourseRoutes)
 	return router
 }
+
 func loadUserAuthRoutes(r chi.Router) {
 	userHandler := &user.User{}
 	r.HandleFunc("/signup", userHandler.SignUp)

@@ -33,6 +33,12 @@ const (
 	Student   RoleType = "Student"
 )
 
+// Constant for Session base Auth
 const (
-	Role = "Role"
+	Role          = "role"
+	UserName      = "userName"
+	UserIP        = "userIP"
+	UserAgent     = "userAgent"
+	SessionKey    = "SESSION_KEY"
+	Authenticated = "authenticated"
 )

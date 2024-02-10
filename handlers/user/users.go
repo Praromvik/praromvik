@@ -33,14 +33,12 @@ import (
 	"github.com/praromvik/praromvik/pkg/auth"
 	"github.com/praromvik/praromvik/pkg/error"
 
-	"cloud.google.com/go/firestore"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type User struct {
-	FClient *firestore.Client
 	*user.User
 }
 

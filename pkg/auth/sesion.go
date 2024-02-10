@@ -26,24 +26,24 @@ package auth
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"log"
 	math "math/rand"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/praromvik/praromvik/models"
 	"github.com/praromvik/praromvik/models/client"
 	"github.com/praromvik/praromvik/models/user"
 
+	"github.com/google/uuid"
 	rstore "github.com/rbcervilla/redisstore/v8"
 )
 
 var (
 	redisStore       *rstore.RedisStore
 	sessionTokenName string
-	authenticated    = "authenticated"
 )
 
 func init() {
@@ -53,12 +53,7 @@ func init() {
 		log.Fatal("failed to create redis store: ", err)
 	}
 	sessionTokenName = randStr(math.Intn(11) + 10)
-	redisStore.KeyPrefix(os.Getenv("SESSION_KEY"))
-}
-
-func randStr(length int) string {
-	randomBytes := make([]byte, length)
-	return hex.EncodeToString(randomBytes)[:length]
+	redisStore.KeyPrefix(os.Getenv(models.SessionKey))
 }
 
 func StoreAuthenticated(w http.ResponseWriter, r *http.Request, u *user.User, v bool) error {
@@ -66,10 +61,13 @@ func StoreAuthenticated(w http.ResponseWriter, r *http.Request, u *user.User, v 
 	if err != nil {
 		return err
 	}
-	session.Values[authenticated] = true
+	session.Values[models.Authenticated] = true
 	if u != nil {
 		session.Values[models.Role] = u.Role
+		session.Values[models.UserName] = u.UserName
 	}
+	session.Values[models.UserIP] = getIpAddress(r)
+	session.Values[models.UserAgent] = r.UserAgent()
 	if !v {
 		session.Options.MaxAge = -1
 	}
@@ -81,7 +79,7 @@ func IsAuthenticated(r *http.Request) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	authValue, _ := session.Values[authenticated].(bool)
+	authValue, _ := session.Values[models.Authenticated].(bool)
 	return authValue, nil
 }
 
@@ -114,5 +112,15 @@ func SessionValid(r *http.Request) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return !session.IsNew, nil
+	return !session.IsNew &&
+		session.Values[models.UserIP] == getIpAddress(r) &&
+		session.Values[models.UserAgent] == r.UserAgent(), nil
+}
+
+func getIpAddress(r *http.Request) string {
+	return strings.Split(r.RemoteAddr, ":")[0]
+}
+
+func randStr(_ int) string {
+	return uuid.NewString()
 }
