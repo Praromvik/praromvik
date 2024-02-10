@@ -74,7 +74,7 @@ func AdminAccess(next http.Handler) http.Handler {
 			error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
 			return
 		}
-		if roleType == models.Admin {
+		if roleType != models.Admin {
 			error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges. Admin or Moderator access required", err)
 			return
 		}
@@ -89,7 +89,7 @@ func AdminOrModeratorAccess(next http.Handler) http.Handler {
 			error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
 			return
 		}
-		if roleType == models.Admin || roleType == models.Moderator {
+		if !(roleType == models.Admin || roleType == models.Moderator) {
 			error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges. Admin or Moderator access required", err)
 			return
 		}
@@ -104,7 +104,7 @@ func ModeratorAccess(next http.Handler) http.Handler {
 			error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
 			return
 		}
-		if roleType == models.Moderator {
+		if roleType != models.Moderator {
 			error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges. Admin or Moderator access required", err)
 			return
 		}

@@ -28,7 +28,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	math "math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -37,13 +36,12 @@ import (
 	"github.com/praromvik/praromvik/models/client"
 	"github.com/praromvik/praromvik/models/user"
 
-	"github.com/google/uuid"
 	rstore "github.com/rbcervilla/redisstore/v8"
 )
 
 var (
 	redisStore       *rstore.RedisStore
-	sessionTokenName string
+	sessionTokenName string = "PRAROMVIK"
 )
 
 func init() {
@@ -52,7 +50,6 @@ func init() {
 	if err != nil {
 		log.Fatal("failed to create redis store: ", err)
 	}
-	sessionTokenName = randStr(math.Intn(11) + 10)
 	redisStore.KeyPrefix(os.Getenv(models.SessionKey))
 }
 
@@ -63,6 +60,7 @@ func StoreAuthenticated(w http.ResponseWriter, r *http.Request, u *user.User, v 
 	}
 	session.Values[models.Authenticated] = true
 	if u != nil {
+		fmt.Println("-------------", u.Role)
 		session.Values[models.Role] = u.Role
 		session.Values[models.UserName] = u.UserName
 	}
@@ -119,8 +117,4 @@ func SessionValid(r *http.Request) (bool, error) {
 
 func getIpAddress(r *http.Request) string {
 	return strings.Split(r.RemoteAddr, ":")[0]
-}
-
-func randStr(_ int) string {
-	return uuid.NewString()
 }
