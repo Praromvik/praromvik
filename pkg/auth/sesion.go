@@ -60,7 +60,6 @@ func StoreAuthenticated(w http.ResponseWriter, r *http.Request, u *user.User, v 
 	}
 	session.Values[models.Authenticated] = true
 	if u != nil {
-		fmt.Println("-------------", u.Role)
 		session.Values[models.Role] = u.Role
 		session.Values[models.UserName] = u.UserName
 	}

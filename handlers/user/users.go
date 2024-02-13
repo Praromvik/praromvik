@@ -69,7 +69,6 @@ func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		valid, err := u.verify()
-		u.Role = "Admin"
 		if err != nil && status.Code(err) != codes.NotFound {
 			error.HandleError(w, http.StatusUnauthorized, "failed to login", err)
 			return
