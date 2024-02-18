@@ -26,14 +26,13 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/praromvik/praromvik/models"
-	"github.com/praromvik/praromvik/models/client"
+	"github.com/praromvik/praromvik/models/db/client"
 	"github.com/praromvik/praromvik/models/user"
 
 	rstore "github.com/rbcervilla/redisstore/v8"
@@ -53,7 +52,7 @@ func init() {
 	redisStore.KeyPrefix(os.Getenv(models.SessionKey))
 }
 
-func StoreAuthenticated(w http.ResponseWriter, r *http.Request, u *user.User, v bool) error {
+func StoreAuthenticated(w http.ResponseWriter, r *http.Request, u *user.User, valid bool) error {
 	session, err := redisStore.Get(r, sessionTokenName)
 	if err != nil {
 		return err
@@ -65,7 +64,7 @@ func StoreAuthenticated(w http.ResponseWriter, r *http.Request, u *user.User, v 
 	}
 	session.Values[models.UserIP] = getIpAddress(r)
 	session.Values[models.UserAgent] = r.UserAgent()
-	if !v {
+	if !valid {
 		session.Options.MaxAge = -1
 	}
 	return session.Save(r, w)
@@ -76,7 +75,7 @@ func IsAuthenticated(r *http.Request) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	authValue, _ := session.Values[models.Authenticated].(bool)
+	authValue := session.Values[models.Authenticated].(bool)
 	return authValue, nil
 }
 
@@ -87,21 +86,9 @@ func GetSessionRole(r *http.Request) (models.RoleType, error) {
 	}
 	role, ok := session.Values[models.Role]
 	if !ok || role == nil {
-		return models.RoleType(""), nil
+		return models.None, nil
 	}
-
-	switch role.(string) {
-	case "Admin":
-		return models.Admin, nil
-	case "Moderator":
-		return models.Moderator, nil
-	case "Student":
-		return models.Student, nil
-	case "Trainer":
-		return models.Trainer, nil
-	default:
-		return "", fmt.Errorf("unknown role type: %s", role.(string))
-	}
+	return models.RoleType(role.(string)), nil
 }
 
 func SessionValid(r *http.Request) (bool, error) {

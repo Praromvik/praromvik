@@ -32,12 +32,3 @@ func (u *User) validate(w http.ResponseWriter) bool {
 	// TODO
 	return true
 }
-
-func (u *User) verify() (bool, error) {
-	//valid, err := user.VerifyLoginData(u.FClient, u.User)
-	//if err != nil {
-	//	return false, err
-	//}
-	//return valid, nil
-	return true, nil
-}

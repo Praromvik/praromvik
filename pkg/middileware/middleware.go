@@ -69,45 +69,37 @@ func SecurityMiddleware(next http.Handler) http.Handler {
 
 func AdminAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		roleType, err := auth.GetSessionRole(request)
-		if err != nil {
-			error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
-			return
-		}
-		if roleType != models.Admin {
-			error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges. Admin or Moderator access required", err)
-			return
-		}
-		next.ServeHTTP(writer, request)
+		serveHTTPIfRoleMatched(next, writer, request, []models.RoleType{models.Admin})
 	})
 }
 
 func AdminOrModeratorAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		roleType, err := auth.GetSessionRole(request)
-		if err != nil {
-			error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
-			return
-		}
-		if !(roleType == models.Admin || roleType == models.Moderator) {
-			error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges. Admin or Moderator access required", err)
-			return
-		}
-		next.ServeHTTP(writer, request)
+		serveHTTPIfRoleMatched(next, writer, request, []models.RoleType{models.Moderator, models.Admin})
 	})
 }
 
 func ModeratorAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		roleType, err := auth.GetSessionRole(request)
-		if err != nil {
-			error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
-			return
-		}
-		if roleType != models.Moderator {
-			error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges. Admin or Moderator access required", err)
-			return
-		}
-		next.ServeHTTP(writer, request)
+		serveHTTPIfRoleMatched(next, writer, request, []models.RoleType{models.Moderator})
 	})
+}
+
+func serveHTTPIfRoleMatched(next http.Handler, writer http.ResponseWriter, request *http.Request, roles []models.RoleType) {
+	role, err := auth.GetSessionRole(request)
+	if err != nil {
+		error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
+		return
+	}
+	var authenticated bool
+	for _, val := range roles {
+		if val == role {
+			authenticated = true
+			break
+		}
+	}
+	if !authenticated {
+		error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges.", err)
+	}
+	next.ServeHTTP(writer, request)
 }

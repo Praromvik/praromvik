@@ -25,31 +25,78 @@ SOFTWARE.
 package user
 
 import (
-	"cloud.google.com/go/firestore"
-
-	"context"
-
-	"fmt"
-
-	"github.com/praromvik/praromvik/models/client"
+	"github.com/praromvik/praromvik/models/db"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (u *User) AddFormDataToMongo() error {
-	coll := client.Mongo.Database("praromvik").Collection("users")
-	result, err := coll.InsertOne(context.TODO(), u)
-
-	fmt.Printf("Inserted document with _id: %v\n", result.InsertedID)
+func (u *User) UpdateUserDataToMongo() error {
+	user := User{}
+	dbAndCollList := []string{"praromvik", "users"}
+	filter := bson.D{{Key: "userName", Value: u.UserName}}
+	result, err := db.Mongo{}.GetDocument(dbAndCollList, filter)
+	if err != nil {
+		return err
+	}
+	if err := result.Decode(&user); err != nil {
+		return err
+	}
+	db.MergeStruct(&user, *u)
+	err = db.Mongo{}.UpdateDocument(dbAndCollList, filter, user)
 	return err
 }
 
-func VerifyLoginData(client *firestore.Client, formData *User) (bool, error) {
-	dSnap, err := client.Collection("Users").Doc(formData.UserName).Get(context.Background())
+func (u *User) AddUserDataToMongo() error {
+	err := db.Mongo{}.AddDocument([]string{"praromvik", "users"}, u)
+	return err
+}
+
+func (u *User) AddUserAuthDataToFirestore() error {
+	authData := getAuthData(*u)
+	err := db.Firestore{}.AddDocument("users", u.UserName, authData)
+	return err
+}
+
+func (u *User) UpdateUserAuthDataToFirestore() error {
+	var user User
+	dSnap, err := db.Firestore{}.GetDocument("users", u.UserName)
+	if err != nil {
+		return err
+	}
+	if err := dSnap.DataTo(&user); err != nil {
+		return err
+	}
+	db.MergeStruct(&user, *u)
+	authData := getAuthData(user)
+	if err != nil {
+		return err
+	}
+	err = db.Firestore{}.UpdateDocument("users", u.UserName, authData)
+	return err
+}
+
+func (u *User) VerifyLoginData() (bool, error) {
+	var user User
+	dSnap, err := db.Firestore{}.GetDocument("users", u.UserName)
 	if err != nil {
 		return false, err
 	}
-	var u User
-	if err := dSnap.DataTo(&u); err != nil {
+	if err := dSnap.DataTo(&user); err != nil {
 		return false, err
 	}
-	return u.Password == formData.Password, nil
+
+	if u.Password == user.Password {
+		u.UUID, u.Role = user.UUID, user.Role
+		return true, err
+	}
+	return false, nil
+}
+
+func getAuthData(user User) map[string]interface{} {
+	var authData = map[string]interface{}{
+		"userName": user.UserName,
+		"uuid":     user.UUID,
+		"password": user.Password,
+		"role":     user.Role,
+	}
+	return authData
 }

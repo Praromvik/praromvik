@@ -52,9 +52,16 @@ func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		u.UUID = uuid.NewString()
-		u.Role = string(models.Student)
-		if err := u.User.AddFormDataToMongo(); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
+		if u.Email == "praromvik.hq@gmail.com" {
+			u.Role = string(models.Admin)
+		} else {
+			u.Role = string(models.Student)
+		}
+		if err := u.User.AddUserDataToMongo(); err != nil {
+			error.HandleError(w, http.StatusBadRequest, "failed to add form data into mongodb", err)
+		}
+		if err := u.User.AddUserAuthDataToFirestore(); err != nil {
+			error.HandleError(w, http.StatusBadRequest, "failed to add form data into firestore", err)
 		}
 		w.WriteHeader(http.StatusOK)
 	} else {
@@ -68,7 +75,7 @@ func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
 			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
-		valid, err := u.verify()
+		valid, err := u.User.VerifyLoginData()
 		if err != nil && status.Code(err) != codes.NotFound {
 			error.HandleError(w, http.StatusUnauthorized, "failed to login", err)
 			return
@@ -90,5 +97,25 @@ func (u *User) SignOut(w http.ResponseWriter, r *http.Request) {
 	if err := auth.StoreAuthenticated(w, r, u.User, false); err != nil {
 		error.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
 		return
+	}
+}
+
+func (u User) ProvideRoleToUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
+			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+			return
+		}
+		if err := u.UpdateUserDataToMongo(); err != nil {
+			error.HandleError(w, http.StatusBadRequest, "Error on Update User", err)
+			return
+		}
+		if err := u.UpdateUserAuthDataToFirestore(); err != nil {
+			error.HandleError(w, http.StatusBadRequest, "Error on Update User", err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
 	}
 }

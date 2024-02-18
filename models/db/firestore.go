@@ -22,24 +22,43 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package models
+package db
 
-type RoleType string
+import (
+	"cloud.google.com/go/firestore"
 
-const (
-	Admin     RoleType = "admin"
-	Moderator RoleType = "moderator"
-	Trainer   RoleType = "trainer"
-	Student   RoleType = "student"
-	None      RoleType = ""
+	"context"
+	"fmt"
+
+	"github.com/praromvik/praromvik/models/db/client"
 )
 
-// Constant for Session base Auth
-const (
-	Role          = "role"
-	UserName      = "userName"
-	UserIP        = "userIP"
-	UserAgent     = "userAgent"
-	SessionKey    = "SESSION_KEY"
-	Authenticated = "authenticated"
-)
+type Firestore struct{}
+
+func (_ Firestore) GetDocument(collName string, id string) (*firestore.DocumentSnapshot, error) {
+	dSnap, err := client.Firestore.Collection(collName).Doc(id).Get(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return dSnap, nil
+}
+
+func (_ Firestore) AddDocument(collName string, id string, data interface{}) error {
+	_, err := client.Firestore.Collection(collName).Doc(id).Create(context.Background(), data)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Inserted document with _id: %v\n", id)
+	return nil
+}
+
+func (_ Firestore) UpdateDocument(collName string, id string, data interface{}) error {
+	_, err := client.Firestore.Collection(collName).Doc(id).Set(context.Background(), data)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Update Document with id %s\n", id)
+	return nil
+}

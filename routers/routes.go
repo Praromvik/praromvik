@@ -39,8 +39,9 @@ func LoadRoutes() *chi.Mux {
 	router.Group(func(r chi.Router) {
 		loadUserAuthRoutes(r)
 	})
+	router.With(middleware.AdminAccess).Post("/role", user.User{}.ProvideRoleToUser)
 
-	router.Route("/courses", loadCourseRoutes)
+	router.Route("/course", loadCourseRoutes)
 	return router
 }
 
