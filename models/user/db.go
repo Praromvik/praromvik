@@ -25,8 +25,16 @@ SOFTWARE.
 package user
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/praromvik/praromvik/models/db"
+
 	"go.mongodb.org/mongo-driver/bson"
+
+	"go.mongodb.org/mongo-driver/mongo"
+
+	"net/http"
 )
 
 func (u *User) UpdateUserDataToMongo() error {
@@ -90,7 +98,34 @@ func (u *User) VerifyLoginData() (bool, error) {
 	}
 	return false, nil
 }
+func (u *User) ValidateForm() (int, error) {
+	dbAndCollList := []string{"praromvik", "users"}
 
+	if err := checkFieldAvailability(dbAndCollList, "userName", u.UserName); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	if err := checkFieldAvailability(dbAndCollList, "email", u.Email); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	if err := checkFieldAvailability(dbAndCollList, "phone", u.Phone); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func checkFieldAvailability(dbAndCollList []string, field string, value string) error {
+	result, err := db.Mongo{}.GetDocument(dbAndCollList, bson.D{{Key: field, Value: value}})
+	if err != nil {
+		return err
+	}
+	if !errors.Is(result.Err(), mongo.ErrNoDocuments) {
+		return fmt.Errorf("this %s is already in use", field)
+	}
+	return nil
+}
 func getAuthData(user User) map[string]interface{} {
 	var authData = map[string]interface{}{
 		"userName": user.UserName,

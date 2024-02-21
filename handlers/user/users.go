@@ -48,7 +48,9 @@ func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
 			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
-		if !u.validate(w) {
+		errCode, err := u.User.ValidateForm()
+		if err != nil {
+			error.HandleError(w, errCode, "", err)
 			return
 		}
 		u.UUID = uuid.NewString()
