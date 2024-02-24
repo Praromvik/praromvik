@@ -27,11 +27,13 @@ package models
 type RoleType string
 
 const (
-	Admin     RoleType = "admin"
-	Moderator RoleType = "moderator"
-	Trainer   RoleType = "trainer"
-	Student   RoleType = "student"
-	None      RoleType = ""
+	Admin      RoleType = "admin"
+	Moderator  RoleType = "moderator"
+	Trainer    RoleType = "trainer"
+	Student    RoleType = "student"
+	None       RoleType = ""
+	AdminEmail          = "praromvik.hq@gmail.com"
+	UUID                = "uuid"
 )
 
 // Constant for Session base Auth

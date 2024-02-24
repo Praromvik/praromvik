@@ -53,17 +53,19 @@ func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
 			error.HandleError(w, errCode, "", err)
 			return
 		}
+
 		u.UUID = uuid.NewString()
-		if u.Email == "praromvik.hq@gmail.com" {
+		if err := u.HashPassword(); err != nil {
+			error.HandleError(w, http.StatusBadRequest, "Failed to hash password", err)
+		}
+		if u.Email == models.AdminEmail {
 			u.Role = string(models.Admin)
 		} else {
 			u.Role = string(models.Student)
 		}
-		if err := u.User.AddUserDataToMongo(); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "failed to add form data into mongodb", err)
-		}
-		if err := u.User.AddUserAuthDataToFirestore(); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "failed to add form data into firestore", err)
+
+		if err := u.User.AddUserDataToDB(); err != nil {
+			error.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
 		}
 		w.WriteHeader(http.StatusOK)
 	} else {
@@ -108,11 +110,13 @@ func (u User) ProvideRoleToUser(w http.ResponseWriter, r *http.Request) {
 			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
-		if err := u.UpdateUserDataToMongo(); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "Error on Update User", err)
+
+		if err := u.User.FetchAndSetUUIDFromDB(); err != nil {
+			error.HandleError(w, http.StatusBadRequest, "", err)
 			return
 		}
-		if err := u.UpdateUserAuthDataToFirestore(); err != nil {
+
+		if err := u.UpdateUserDataToDB(); err != nil {
 			error.HandleError(w, http.StatusBadRequest, "Error on Update User", err)
 			return
 		}

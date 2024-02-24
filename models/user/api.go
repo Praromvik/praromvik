@@ -30,5 +30,5 @@ type User struct {
 	Password string `json:"password" bson:"password"`
 	Phone    string `json:"phone" bson:"phone"`
 	Role     string `json:"role" bson:"role"`
-	UUID     string
+	UUID     string `json:"uuid" bson:"uuid"`
 }

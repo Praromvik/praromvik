@@ -25,30 +25,14 @@ SOFTWARE.
 package db
 
 import (
-	"fmt"
-
-	"github.com/praromvik/praromvik/models/db/client"
-
-	"go.mongodb.org/mongo-driver/mongo"
-
 	"reflect"
 )
 
-func getDBCollection(dbAndCollList []string) (*mongo.Collection, error) {
-	if len(dbAndCollList) == 0 {
-		return nil, fmt.Errorf("empty database name")
-	} else if len(dbAndCollList)%2 == 1 {
-		return nil, fmt.Errorf("invalid number of DB and collection names provided, must be even")
-	}
-	db, collection := &mongo.Database{}, &mongo.Collection{}
-	for i, val := range dbAndCollList {
-		if i%2 == 0 {
-			db = client.Mongo.Database(val)
-		} else {
-			collection = db.Collection(val)
-		}
-	}
-	return collection, nil
+type Namespaces []Namespace
+
+type Namespace struct {
+	Database   string
+	Collection string
 }
 
 func MergeStruct(oldStruct interface{}, newStruct interface{}) {

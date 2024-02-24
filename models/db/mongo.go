@@ -28,13 +28,17 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/praromvik/praromvik/models/db/client"
+
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type Mongo struct{}
+type Mongo struct {
+	Namespaces
+}
 
-func (_ Mongo) GetDocument(dbAndCollList []string, filter interface{}) (*mongo.SingleResult, error) {
-	collection, err := getDBCollection(dbAndCollList)
+func (m Mongo) GetDocument(filter interface{}) (*mongo.SingleResult, error) {
+	collection, err := m.getDBCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +46,8 @@ func (_ Mongo) GetDocument(dbAndCollList []string, filter interface{}) (*mongo.S
 	return result, nil
 }
 
-func (_ Mongo) AddDocument(dbAndCollList []string, data interface{}) error {
-	collection, err := getDBCollection(dbAndCollList)
+func (m Mongo) AddDocument(data interface{}) error {
+	collection, err := m.getDBCollection()
 	if err != nil {
 		return err
 	}
@@ -55,16 +59,28 @@ func (_ Mongo) AddDocument(dbAndCollList []string, data interface{}) error {
 	return nil
 }
 
-func (_ Mongo) UpdateDocument(dbAndCollList []string, filter interface{}, newDocument interface{}) error {
-	collection, err := getDBCollection(dbAndCollList)
+func (m Mongo) UpdateDocument(filter interface{}, newData interface{}) error {
+	collection, err := m.getDBCollection()
 	if err != nil {
 		return err
 	}
-	result, err := collection.ReplaceOne(context.TODO(), filter, newDocument)
+	result, err := collection.ReplaceOne(context.TODO(), filter, newData)
 	if err != nil {
 		return fmt.Errorf("failed to update document: %v", err)
 	}
 	fmt.Printf("Update Document. Result. MatchedCount:"+
 		" %d, UpsertedCount: %d, ModifiedCount: %d.\n", result.MatchedCount, result.UpsertedCount, result.ModifiedCount)
 	return nil
+}
+
+func (m Mongo) getDBCollection() (*mongo.Collection, error) {
+	if len(m.Namespaces) == 0 {
+		return nil, fmt.Errorf("empty database name")
+	}
+	db, collection := &mongo.Database{}, &mongo.Collection{}
+	for _, val := range m.Namespaces {
+		db = client.Mongo.Database(val.Database)
+		collection = db.Collection(val.Collection)
+	}
+	return collection, nil
 }
