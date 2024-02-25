@@ -28,33 +28,44 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/praromvik/praromvik/models"
 	"github.com/praromvik/praromvik/models/user"
 	"github.com/praromvik/praromvik/pkg/auth"
-	"github.com/praromvik/praromvik/pkg/error"
+	perror "github.com/praromvik/praromvik/pkg/error"
 
-	"cloud.google.com/go/firestore"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type User struct {
-	FClient *firestore.Client
 	*user.User
 }
 
-func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
+func (u User) SignUp(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+			perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
-		if !u.validate(w) {
+		errCode, err := u.User.ValidateForm()
+		if err != nil {
+			perror.HandleError(w, errCode, "", err)
 			return
 		}
+
 		u.UUID = uuid.NewString()
-		if err := user.AddFormData(u.FClient, u.User); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
+		if err := u.HashPassword(); err != nil {
+			perror.HandleError(w, http.StatusBadRequest, "Failed to hash password", err)
+		}
+		if u.Email == models.AdminEmail {
+			u.Role = string(models.Admin)
+		} else {
+			u.Role = string(models.Student)
+		}
+
+		if err := u.User.AddUserDataToDB(); err != nil {
+			perror.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
 		}
 		w.WriteHeader(http.StatusOK)
 	} else {
@@ -62,25 +73,23 @@ func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
+func (u User) SignIn(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+			perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
-		valid, err := u.verify()
+		valid, err := u.User.VerifyLoginData()
 		if err != nil && status.Code(err) != codes.NotFound {
-			error.HandleError(w, http.StatusUnauthorized, "failed to login", err)
+			perror.HandleError(w, http.StatusUnauthorized, "failed to login", err)
 			return
 		}
-
-		if valid {
-			if err := auth.GenerateJWTAndSetCookie(w, u.User); err != nil {
-				error.HandleError(w, http.StatusBadRequest, "failed to set JWT token in cookie", err)
-				return
-			}
-		} else {
-			error.HandleError(w, http.StatusUnauthorized, "invalid username or password", nil)
+		if !valid {
+			perror.HandleError(w, http.StatusUnauthorized, "invalid username or password", nil)
+		}
+		if err := auth.StoreAuthenticated(w, r, u.User, true); err != nil {
+			perror.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
+			return
 		}
 		w.WriteHeader(http.StatusOK)
 	} else {
@@ -88,6 +97,31 @@ func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u *User) SignOut(writer http.ResponseWriter, request *http.Request) {
-	auth.UnsetJWTInCookie(writer, request)
+func (u User) SignOut(w http.ResponseWriter, r *http.Request) {
+	if err := auth.StoreAuthenticated(w, r, u.User, false); err != nil {
+		perror.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
+		return
+	}
+}
+
+func (u User) ProvideRoleToUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
+			perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+			return
+		}
+
+		if err := u.User.FetchAndSetUUIDFromDB(); err != nil {
+			perror.HandleError(w, http.StatusBadRequest, "", err)
+			return
+		}
+
+		if err := u.UpdateUserDataToDB(); err != nil {
+			perror.HandleError(w, http.StatusBadRequest, "Error on Update User", err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+	}
 }

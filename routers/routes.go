@@ -25,35 +25,39 @@ SOFTWARE.
 package routers
 
 import (
+	"github.com/go-chi/chi/v5"
 	"github.com/praromvik/praromvik/handlers/course"
 	"github.com/praromvik/praromvik/handlers/user"
-	"github.com/praromvik/praromvik/pkg/auth"
 	middleware "github.com/praromvik/praromvik/pkg/middileware"
-
-	"cloud.google.com/go/firestore"
-	"github.com/go-chi/chi/v5"
 )
 
-func LoadRoutes(fClient *firestore.Client) *chi.Mux {
+func LoadRoutes() *chi.Mux {
 	router := chi.NewRouter()
+	// Apply global middleware
 	middleware.AddMiddlewares(router)
 
 	router.Group(func(r chi.Router) {
-		userHandler := &user.User{FClient: fClient}
-		r.HandleFunc("/signup", userHandler.SignUp)
-		r.HandleFunc("/signin", userHandler.SignIn)
-		r.HandleFunc("/signout", userHandler.SignOut)
+		loadUserAuthRoutes(r)
 	})
-	router.Route("/courses", loadCourseRoutes)
+	router.With(middleware.AdminAccess).Post("/role", user.User{}.ProvideRoleToUser)
+
+	router.Route("/course", loadCourseRoutes)
 	return router
 }
 
+func loadUserAuthRoutes(r chi.Router) {
+	userHandler := &user.User{}
+	r.HandleFunc("/signup", userHandler.SignUp)
+	r.HandleFunc("/signin", userHandler.SignIn)
+	r.HandleFunc("/signout", userHandler.SignOut)
+}
+
 func loadCourseRoutes(r chi.Router) {
-	r.Use(auth.VerifyJWT)
 	courseHandler := &course.Course{}
-	r.Post("/", courseHandler.Create)
+	r.Use(middleware.SecurityMiddleware)
 	r.Get("/", courseHandler.List)
 	r.Get("/{id}", courseHandler.GetByID)
-	r.Put("/{id}", courseHandler.UpdateByID)
-	r.Delete("/{id}", courseHandler.DeleteByID)
+	r.With(middleware.AdminOrModeratorAccess).Post("/", courseHandler.Create)
+	r.With(middleware.AdminOrModeratorAccess).Put("/{id}", courseHandler.UpdateByID)
+	r.With(middleware.AdminAccess).Delete("/{id}", courseHandler.DeleteByID)
 }

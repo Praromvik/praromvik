@@ -25,17 +25,10 @@ SOFTWARE.
 package user
 
 type User struct {
-	UserName string `json:"userName"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Phone    string `json:"phone"`
-	UUID     string
-	Role     string
-}
-
-type Instructor struct {
-	InstructorId string `json:"instructorId"`
-	Name         string `json:"name"`
-	Phone        string `json:"phone"`
-	Email        string `json:"email"`
+	UserName string `json:"userName" bson:"userName"`
+	Email    string `json:"email" bson:"email"`
+	Password string `json:"password" bson:"password"`
+	Phone    string `json:"phone" bson:"phone"`
+	Role     string `json:"role" bson:"role"`
+	UUID     string `json:"uuid" bson:"uuid"`
 }

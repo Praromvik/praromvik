@@ -35,43 +35,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/praromvik/praromvik/pkg/client"
 	"github.com/praromvik/praromvik/routers"
-
-	"cloud.google.com/go/firestore"
-	"github.com/redis/go-redis/v9"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Server struct {
-	router   http.Handler
-	fClient  *firestore.Client
-	mgClient *mongo.Client
-	rdClient *redis.Client
+	router http.Handler
 }
 
-func New(ctx context.Context) (*Server, error) {
-	fClient, err := client.ConnectToFireStore(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get firestore client: %v", err)
-	}
-
-	mgClient, err := client.ConnectToMongoDB(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get MongoDB client: %v", err)
-	}
-
-	rdClient, err := client.ConnectToRedis()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get redis client: %v", err)
-	}
-	err = client.TestRedisConnection(ctx, rdClient)
-
+func New() (*Server, error) {
 	app := &Server{
-		router:   routers.LoadRoutes(fClient),
-		fClient:  fClient,
-		mgClient: mgClient,
-		rdClient: rdClient,
+		router: routers.LoadRoutes(),
 	}
 	return app, nil
 }
@@ -92,7 +65,8 @@ func (a *Server) Start(ctx context.Context) error {
 		<-sig
 
 		// Shutdown signal with grace period of 30 seconds
-		shutdownCtx, _ := context.WithTimeout(serverCtx, 10*time.Second)
+		shutdownCtx, cancelShutdown := context.WithTimeout(serverCtx, 10*time.Second)
+		defer cancelShutdown()
 
 		go func() {
 			<-shutdownCtx.Done()

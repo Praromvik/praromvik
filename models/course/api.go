@@ -25,29 +25,27 @@ SOFTWARE.
 package course
 
 import (
-	"github.com/praromvik/praromvik/models/user"
 	"google.golang.org/genproto/googleapis/type/date"
 )
 
 type Course struct {
-	CourseId           string            `json:"courseId"`
-	Title              string            `json:"title"`
-	Description        string            `json:"description"`
-	Instructors        []user.Instructor `json:"instructors"`
-	StartDate          date.Date         `json:"startDate"`
-	EndDate            date.Date         `json:"endDate"`
-	Duration           int               `json:"duration"` // Duration in week
-	EnrollmentCapacity int               `json:"enrollmentCapacity"`
-	EnrollmentStudents []user.User       `json:"enrollmentStudents"`
-	Lessons            []Lesson          `json:"lessons"`
+	CourseId           string    `json:"courseId"`
+	Title              string    `json:"title"`
+	Description        string    `json:"description"`
+	Instructors        []string  `json:"instructors"`
+	StartDate          date.Date `json:"startDate"`
+	EndDate            date.Date `json:"endDate"`
+	Duration           int       `json:"duration"` // Duration in week
+	EnrollmentCapacity int       `json:"enrollmentCapacity"`
+	EnrollmentStudents []string  `json:"enrollmentStudents"`
+	Lessons            []Lesson  `json:"lessons"`
 }
 
 type Lesson struct {
 	LessonId string `json:"lessonId"`
 	Title    string `json:"title"`
 	Content  string `json:"content"`
-	// resources []resource `json:"resources"`
-	Quizzes []Quiz `json:"quizzes"`
+	Quizzes  []Quiz `json:"quizzes"`
 }
 
 type Quiz struct {

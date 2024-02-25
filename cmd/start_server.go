@@ -30,7 +30,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
 
@@ -41,8 +40,7 @@ var startServerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		flag.Parse()
 		ctx := context.Background()
-
-		server, err := New(ctx)
+		server, err := New()
 		if err != nil {
 			log.Printf("failed to get new server instance: %v \n", err)
 			return
@@ -56,9 +54,6 @@ var startServerCmd = &cobra.Command{
 var port string
 
 func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error getting env, %v", err)
-	}
 	rootCmd.AddCommand(startServerCmd)
 	startServerCmd.PersistentFlags().StringVarP(&port, "port", "p", "3030", "Set server listening port address.")
 }
