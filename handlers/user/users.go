@@ -31,7 +31,7 @@ import (
 	"github.com/praromvik/praromvik/models"
 	"github.com/praromvik/praromvik/models/user"
 	"github.com/praromvik/praromvik/pkg/auth"
-	"github.com/praromvik/praromvik/pkg/error"
+	perror "github.com/praromvik/praromvik/pkg/error"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -42,21 +42,21 @@ type User struct {
 	*user.User
 }
 
-func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
+func (u User) SignUp(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+			perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
 		errCode, err := u.User.ValidateForm()
 		if err != nil {
-			error.HandleError(w, errCode, "", err)
+			perror.HandleError(w, errCode, "", err)
 			return
 		}
 
 		u.UUID = uuid.NewString()
 		if err := u.HashPassword(); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "Failed to hash password", err)
+			perror.HandleError(w, http.StatusBadRequest, "Failed to hash password", err)
 		}
 		if u.Email == models.AdminEmail {
 			u.Role = string(models.Admin)
@@ -65,7 +65,7 @@ func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := u.User.AddUserDataToDB(); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
+			perror.HandleError(w, http.StatusBadRequest, "failed to add form data into database", err)
 		}
 		w.WriteHeader(http.StatusOK)
 	} else {
@@ -73,22 +73,22 @@ func (u *User) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
+func (u User) SignIn(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+			perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
 		valid, err := u.User.VerifyLoginData()
 		if err != nil && status.Code(err) != codes.NotFound {
-			error.HandleError(w, http.StatusUnauthorized, "failed to login", err)
+			perror.HandleError(w, http.StatusUnauthorized, "failed to login", err)
 			return
 		}
 		if !valid {
-			error.HandleError(w, http.StatusUnauthorized, "invalid username or password", nil)
+			perror.HandleError(w, http.StatusUnauthorized, "invalid username or password", nil)
 		}
 		if err := auth.StoreAuthenticated(w, r, u.User, true); err != nil {
-			error.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
+			perror.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -97,9 +97,9 @@ func (u *User) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u *User) SignOut(w http.ResponseWriter, r *http.Request) {
+func (u User) SignOut(w http.ResponseWriter, r *http.Request) {
 	if err := auth.StoreAuthenticated(w, r, u.User, false); err != nil {
-		error.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
+		perror.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
 		return
 	}
 }
@@ -107,17 +107,17 @@ func (u *User) SignOut(w http.ResponseWriter, r *http.Request) {
 func (u User) ProvideRoleToUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+			perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
 
 		if err := u.User.FetchAndSetUUIDFromDB(); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "", err)
+			perror.HandleError(w, http.StatusBadRequest, "", err)
 			return
 		}
 
 		if err := u.UpdateUserDataToDB(); err != nil {
-			error.HandleError(w, http.StatusBadRequest, "Error on Update User", err)
+			perror.HandleError(w, http.StatusBadRequest, "Error on Update User", err)
 			return
 		}
 		w.WriteHeader(http.StatusOK)

@@ -21,6 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // */
+
 package client
 
 import (
@@ -28,7 +29,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
-	_ "github.com/lib/pq"
 	"os"
 	"os/exec"
 )

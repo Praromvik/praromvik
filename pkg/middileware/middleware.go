@@ -29,7 +29,7 @@ import (
 
 	"github.com/praromvik/praromvik/models"
 	"github.com/praromvik/praromvik/pkg/auth"
-	"github.com/praromvik/praromvik/pkg/error"
+	perror "github.com/praromvik/praromvik/pkg/error"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -46,21 +46,21 @@ func SecurityMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		valid, err := auth.SessionValid(r)
 		if err != nil {
-			error.HandleError(w, http.StatusUnauthorized, "Failed to validate session: "+err.Error(), err)
+			perror.HandleError(w, http.StatusUnauthorized, "Failed to validate session: "+err.Error(), err)
 			return
 		}
 		if !valid {
-			error.HandleError(w, http.StatusUnauthorized, "Invalid session token", err)
+			perror.HandleError(w, http.StatusUnauthorized, "Invalid session token", err)
 			return
 		}
 		authenticated, err := auth.IsAuthenticated(r)
 		if err != nil {
-			error.HandleError(w, http.StatusUnauthorized, "Failed to check authentication status: "+err.Error(), err)
+			perror.HandleError(w, http.StatusUnauthorized, "Failed to check authentication status: "+err.Error(), err)
 			return
 		}
 
 		if !authenticated {
-			error.HandleError(w, http.StatusUnauthorized, "Unauthenticated session token", err)
+			perror.HandleError(w, http.StatusUnauthorized, "Unauthenticated session token", err)
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -88,7 +88,7 @@ func ModeratorAccess(next http.Handler) http.Handler {
 func serveHTTPIfRoleMatched(next http.Handler, writer http.ResponseWriter, request *http.Request, roles []models.RoleType) {
 	role, err := auth.GetSessionRole(request)
 	if err != nil {
-		error.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
+		perror.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
 		return
 	}
 	var authenticated bool
@@ -99,7 +99,7 @@ func serveHTTPIfRoleMatched(next http.Handler, writer http.ResponseWriter, reque
 		}
 	}
 	if !authenticated {
-		error.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges.", err)
+		perror.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges.", err)
 	}
 	next.ServeHTTP(writer, request)
 }

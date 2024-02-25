@@ -29,12 +29,11 @@ import (
 	"fmt"
 
 	"github.com/praromvik/praromvik/models/db/client"
-
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Mongo struct {
-	Namespaces
+	Namespaces Namespaces
 }
 
 func (m Mongo) GetDocument(filter interface{}) (*mongo.SingleResult, error) {

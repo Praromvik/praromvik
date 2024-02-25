@@ -40,7 +40,7 @@ import (
 
 var (
 	redisStore       *rstore.RedisStore
-	sessionTokenName string = "PRAROMVIK"
+	sessionTokenName = "PRAROMVIK"
 )
 
 func init() {

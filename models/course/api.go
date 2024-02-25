@@ -45,8 +45,7 @@ type Lesson struct {
 	LessonId string `json:"lessonId"`
 	Title    string `json:"title"`
 	Content  string `json:"content"`
-	// resources []resource `json:"resources"`
-	Quizzes []Quiz `json:"quizzes"`
+	Quizzes  []Quiz `json:"quizzes"`
 }
 
 type Quiz struct {

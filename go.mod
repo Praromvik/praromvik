@@ -10,7 +10,6 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.1
 	github.com/joho/godotenv v1.5.1
-	github.com/lib/pq v1.10.9
 	github.com/rbcervilla/redisstore/v8 v8.1.0
 	github.com/spf13/cobra v1.8.0
 	go.mongodb.org/mongo-driver v1.13.1

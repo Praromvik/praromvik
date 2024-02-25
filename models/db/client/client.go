@@ -33,9 +33,11 @@ import (
 	"log"
 )
 
-var Firestore *firestore.Client
-var Mongo *mongo.Client
-var Redis *redis.Client
+var (
+	Firestore *firestore.Client
+	Mongo     *mongo.Client
+	Redis     *redis.Client
+)
 
 func init() {
 	if err := godotenv.Load(); err != nil {
