@@ -50,6 +50,9 @@ github.com/dgryski/go-rendezvous
 ## explicit; go 1.14
 github.com/go-chi/chi/v5
 github.com/go-chi/chi/v5/middleware
+# github.com/go-chi/cors v1.2.1
+## explicit; go 1.14
+github.com/go-chi/cors
 # github.com/go-redis/redis/v8 v8.3.3
 ## explicit; go 1.11
 github.com/go-redis/redis/v8
