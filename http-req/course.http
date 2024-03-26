@@ -1,0 +1,53 @@
+###
+# SignIn endpoint
+POST http://localhost:3030/signin
+Content-Type: application/json
+
+{
+  "userName": "admin",
+  "password": "itiswhatitis"
+}
+
+> {% client.global.set("PRAROMVIK", response.body.json.token); %}
+
+###
+# Create Course 1
+POST http://localhost:3030/course
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json
+
+{
+  "courseId": "advanced-golang",
+  "title": "Go: The Complete Developer's Guide (Golang)",
+  "description": "Master the fundamentals and advanced features of the Go Programming Language (Golang)"
+}
+
+###
+# Create Course 2
+POST http://localhost:3030/course
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json
+
+{
+  "courseId": "prometheus-certified-associate-pca",
+  "title": "Prometheus Certified Associate (PCA)",
+  "description": "Prometheus is an open-source monitoring & alerting solution that collects metrics data and stores it in a time-series database."
+}
+
+###
+# Get Course
+GET http://localhost:3030/course/prometheus-certified-associate-pca
+Authorization: Bearer {{PRAROMVIK}}
+
+###
+# Delete Course
+DELETE http://localhost:3030/course/advanced-golang
+Authorization: Bearer {{PRAROMVIK}}
+
+###
+# List Course
+GET http://localhost:3030/course/list
+Authorization: Bearer {{PRAROMVIK}}
+
+
+GET http://localhost:3030/course/advanced-golang/introduction/quiz-1/

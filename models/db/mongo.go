@@ -29,6 +29,7 @@ import (
 	"fmt"
 
 	"github.com/praromvik/praromvik/models/db/client"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -70,6 +71,32 @@ func (m Mongo) UpdateDocument(filter interface{}, newData interface{}) error {
 	fmt.Printf("Update Document. Result. MatchedCount:"+
 		" %d, UpsertedCount: %d, ModifiedCount: %d.\n", result.MatchedCount, result.UpsertedCount, result.ModifiedCount)
 	return nil
+}
+
+func (m Mongo) DeleteDocument(filter interface{}) error {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return err
+	}
+	result, err := collection.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		return fmt.Errorf("failed to delete document: %v", err)
+	}
+	fmt.Printf("Deleted %d documents\n", result.DeletedCount)
+	return nil
+}
+
+func (m Mongo) ListDocument() (*mongo.Cursor, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	cur, err := collection.Find(context.Background(), bson.D{})
+	if err != nil {
+		return nil, err
+	}
+	return cur, nil
+
 }
 
 func (m Mongo) getDBCollection() (*mongo.Collection, error) {

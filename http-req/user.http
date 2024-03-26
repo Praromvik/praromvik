@@ -8,16 +8,18 @@ Content-Type: application/json
   "phone": "+8801540179777",
   "email": "sunny.cse7575@gmail.com"
 }
+
 ###
 # SignIn endpoint
 POST http://localhost:3030/signin
 Content-Type: application/json
 
 {
-  "userName": "student-1",
-  "password": "123"
+  "userName": "admin",
+  "password": "itiswhatitis"
 }
 
-###
-#
+> {% client.global.set("PRAROMVIK", response.body.json.token); %}
+
+
 

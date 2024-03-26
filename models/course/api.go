@@ -29,33 +29,40 @@ import (
 )
 
 type Course struct {
-	CourseId           string    `json:"courseId"`
-	Title              string    `json:"title"`
-	Description        string    `json:"description"`
-	Instructors        []string  `json:"instructors"`
-	StartDate          date.Date `json:"startDate"`
-	EndDate            date.Date `json:"endDate"`
-	Duration           int       `json:"duration"` // Duration in week
-	EnrollmentCapacity int       `json:"enrollmentCapacity"`
-	EnrollmentStudents []string  `json:"enrollmentStudents"`
-	Lessons            []Lesson  `json:"lessons"`
+	UUID               string    `json:"uuid" bson:"uuid"`
+	CourseId           string    `json:"courseId" bson:"courseId"`
+	Title              string    `json:"title" bson:"title"`
+	Description        string    `json:"description" bson:"description"`
+	Instructors        []string  `json:"instructors" bson:"instructors"`
+	Moderators         []string  `json:"moderators" bson:"moderators"`
+	StartDate          date.Date `json:"startDate" bson:"startDate"`
+	EndDate            date.Date `json:"endDate" bson:"endDate"`
+	Duration           int       `json:"duration" bson:"duration"` // Duration in week
+	EnrollmentStudents []string  `json:"enrollmentStudents" bson:"enrollmentStudents"`
+	Lessons            []string  `json:"lessons" bson:"lessons"`
+	Price              string    `json:"price" bson:"price"`
 }
 
 type Lesson struct {
-	LessonId string `json:"lessonId"`
-	Title    string `json:"title"`
-	Content  string `json:"content"`
-	Quizzes  []Quiz `json:"quizzes"`
+	UUID     string   `json:"uuid" bson:"uuid"`
+	LessonId string   `json:"lessonId" bson:"lessonId"`
+	Title    string   `json:"title" bson:"title"`
+	Content  []string `json:"content" bson:"content"`
+}
+
+type Content struct {
+	UUID string `json:"uuid" bson:"uuid"`
+	Name string `json:"Name" bson:"name"`
+	Type string `json:"type" bson:"type"` // video, resource, quiz, lab
 }
 
 type Quiz struct {
-	QuizId    string     `json:"quizId"`
-	Questions []Question `json:"questions"`
+	Questions []string `json:"questions" bson:"questions"`
 }
 
 type Question struct {
-	QuestionId    string   `json:"QuestionId"`
-	Ques          string   `json:"ques"`
-	Options       []string `json:"options"`
-	CorrectOption string   `json:"correctOption"`
+	UUID           string   `json:"uuid" bson:"uuid"`
+	Name           string   `json:"Name" bson:"Name"`
+	Options        []string `json:"options" bson:"options"`
+	CorrectOptions []string `json:"correctOptions" bson:"correctOptions"`
 }

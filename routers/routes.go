@@ -64,11 +64,18 @@ func loadUserAuthRoutes(r chi.Router) {
 }
 
 func loadCourseRoutes(r chi.Router) {
-	courseHandler := &course.Course{}
 	r.Use(middleware.SecurityMiddleware)
-	r.Get("/", courseHandler.List)
-	r.Get("/{id}", courseHandler.GetByID)
-	r.With(middleware.AdminOrModeratorAccess).Post("/", courseHandler.Create)
-	r.With(middleware.AdminOrModeratorAccess).Put("/{id}", courseHandler.UpdateByID)
-	r.With(middleware.AdminAccess).Delete("/{id}", courseHandler.DeleteByID)
+	courseHandler := &course.Course{}
+
+	r.Get("/list", courseHandler.List)
+	r.With(middleware.AddCourseUUIDToCtx).Get("/{id}", courseHandler.Get)
+
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AdminOrModeratorAccess)
+		r.Post("/", courseHandler.Create)
+		r.With(middleware.AddCourseUUIDToCtx).Put("/{id}", courseHandler.UpdateByID)
+	})
+
+	// Require admin access and use AddCourseUUIDToCtx middleware
+	r.With(middleware.AdminAccess, middleware.AddCourseUUIDToCtx).Delete("/{id}", courseHandler.DeleteByID)
 }

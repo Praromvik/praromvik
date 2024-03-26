@@ -25,32 +25,112 @@ SOFTWARE.
 package course
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/praromvik/praromvik/handlers/utils"
 	"github.com/praromvik/praromvik/models/course"
+	"github.com/praromvik/praromvik/pkg/auth"
+	perror "github.com/praromvik/praromvik/pkg/error"
+
+	"github.com/google/uuid"
 )
 
 type Course struct {
 	*course.Course
 }
 
-func (o *Course) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Create an Course")
+func (c *Course) Create(w http.ResponseWriter, r *http.Request) {
+	if err := json.NewDecoder(r.Body).Decode(&c.Course); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+		return
+	}
+
+	errCode, err := c.ValidateCourseIDUniqueness()
+	if err != nil {
+		perror.HandleError(w, errCode, "", err)
+		return
+	}
+
+	c.UUID = uuid.NewString()
+	userName, err := auth.GetUserUserNameFromSession(r)
+	if err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting session", err)
+		return
+	}
+	c.Instructors = append(c.Instructors, userName)
+	if err := c.AddCourseDataToDB(); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "failed to course data into database", err)
+		return
+	}
 }
 
-func (o *Course) List(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("List all Courses")
+func (c *Course) List(w http.ResponseWriter, r *http.Request) {
+	c.Course = &course.Course{}
+	courseList, err := c.Course.List()
+	if err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting course list.", err)
+	}
+	var mapList []map[string]interface{}
+	for i := range courseList {
+		val := &courseList[i]
+		data, err := utils.RemovedUUID(val)
+		if err != nil {
+			perror.HandleError(w, http.StatusInternalServerError, "", err)
+			return
+		}
+		mapList = append(mapList, data)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(mapList); err != nil {
+		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
+	}
 }
 
-func (o *Course) GetByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Get an Course by ID")
+func (c *Course) Get(w http.ResponseWriter, r *http.Request) {
+	var ok bool
+	c.Course = &course.Course{}
+	ctx := r.Context()
+	c.UUID, ok = ctx.Value("uuid").(string)
+	if !ok {
+		perror.HandleError(w, http.StatusUnprocessableEntity, "",
+			fmt.Errorf("failed to extract uuid from url"))
+		return
+	}
+	if err := c.Course.Get(); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting course.", err)
+	}
+	data, err := utils.RemovedUUID(c)
+	if err != nil {
+		perror.HandleError(w, http.StatusInternalServerError, "", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
-func (o *Course) UpdateByID(w http.ResponseWriter, r *http.Request) {
+func (c *Course) UpdateByID(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update an Course by ID")
 }
 
-func (o *Course) DeleteByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Delete an Course by ID")
+func (c *Course) DeleteByID(w http.ResponseWriter, r *http.Request) {
+	var ok bool
+	c.Course = &course.Course{}
+	ctx := r.Context()
+	c.UUID, ok = ctx.Value("uuid").(string)
+	if !ok {
+		perror.HandleError(w, http.StatusUnprocessableEntity, "",
+			fmt.Errorf("failed to extract uuid from url"))
+		return
+	}
+	if err := c.Delete(); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting course.", err)
+	}
+	w.WriteHeader(http.StatusOK)
 }

@@ -101,6 +101,15 @@ func SessionValid(r *http.Request) (bool, error) {
 		session.Values[models.UserAgent] == r.UserAgent(), nil
 }
 
+func GetUserUserNameFromSession(r *http.Request) (string, error) {
+	session, err := redisStore.Get(r, sessionTokenName)
+	if err != nil {
+		return "", err
+	}
+	val := session.Values[models.UserName]
+	return val.(string), err
+}
+
 func getIpAddress(r *http.Request) string {
 	return strings.Split(r.RemoteAddr, ":")[0]
 }

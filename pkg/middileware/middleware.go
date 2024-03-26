@@ -25,9 +25,11 @@ SOFTWARE.
 package middleware
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/praromvik/praromvik/models"
+	"github.com/praromvik/praromvik/models/course"
 	"github.com/praromvik/praromvik/pkg/auth"
 	perror "github.com/praromvik/praromvik/pkg/error"
 
@@ -102,4 +104,20 @@ func serveHTTPIfRoleMatched(next http.Handler, writer http.ResponseWriter, reque
 		perror.HandleError(writer, http.StatusUnauthorized, "Insufficient privileges.", err)
 	}
 	next.ServeHTTP(writer, request)
+}
+
+func AddCourseUUIDToCtx(next http.Handler) http.Handler {
+	type ctxKey string
+	const keyUUID ctxKey = "uuid"
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		uuid, err := course.GetCourseUUID(id)
+		if err != nil {
+			perror.HandleError(w, http.StatusNotFound, "", err)
+			return
+		}
+		// Add UUID to request context
+		ctx := context.WithValue(r.Context(), keyUUID, uuid)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
