@@ -25,11 +25,9 @@ SOFTWARE.
 package middleware
 
 import (
-	"context"
+	"github.com/praromvik/praromvik/models/utils"
 	"net/http"
 
-	"github.com/praromvik/praromvik/models"
-	"github.com/praromvik/praromvik/models/course"
 	"github.com/praromvik/praromvik/pkg/auth"
 	perror "github.com/praromvik/praromvik/pkg/error"
 
@@ -71,23 +69,23 @@ func SecurityMiddleware(next http.Handler) http.Handler {
 
 func AdminAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		serveHTTPIfRoleMatched(next, writer, request, []models.RoleType{models.Admin})
+		serveHTTPIfRoleMatched(next, writer, request, []utils.RoleType{utils.Admin})
 	})
 }
 
 func AdminOrModeratorAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		serveHTTPIfRoleMatched(next, writer, request, []models.RoleType{models.Moderator, models.Admin})
+		serveHTTPIfRoleMatched(next, writer, request, []utils.RoleType{utils.Moderator, utils.Admin})
 	})
 }
 
 func ModeratorAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		serveHTTPIfRoleMatched(next, writer, request, []models.RoleType{models.Moderator})
+		serveHTTPIfRoleMatched(next, writer, request, []utils.RoleType{utils.Moderator})
 	})
 }
 
-func serveHTTPIfRoleMatched(next http.Handler, writer http.ResponseWriter, request *http.Request, roles []models.RoleType) {
+func serveHTTPIfRoleMatched(next http.Handler, writer http.ResponseWriter, request *http.Request, roles []utils.RoleType) {
 	role, err := auth.GetSessionRole(request)
 	if err != nil {
 		perror.HandleError(writer, http.StatusUnauthorized, "Failed to retrieve role from session", err)
@@ -106,18 +104,25 @@ func serveHTTPIfRoleMatched(next http.Handler, writer http.ResponseWriter, reque
 	next.ServeHTTP(writer, request)
 }
 
-func AddCourseUUIDToCtx(next http.Handler) http.Handler {
-	type ctxKey string
-	const keyUUID ctxKey = "uuid"
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		uuid, err := course.GetCourseUUID(id)
-		if err != nil {
-			perror.HandleError(w, http.StatusNotFound, "", err)
-			return
-		}
-		// Add UUID to request context
-		ctx := context.WithValue(r.Context(), keyUUID, uuid)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
+//func AddCourseIDToCtx(next http.Handler) http.Handler {
+//	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//		id := chi.URLParam(r, "id")
+//		// Add UUID to request context
+//		ctx := context.WithValue(r.Context(), "uuid", uuid)
+//		next.ServeHTTP(w, r.WithContext(ctx))
+//	})
+//}
+
+//func AddLessonUUIDToCtx(next http.Handler) http.Handler {
+//	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//		name := chi.URLParam(r, "name")
+//		uuid, err := course.GetLessonUUID(name)
+//		if err != nil {
+//			perror.HandleError(w, http.StatusNotFound, "", err)
+//			return
+//		}
+//		// Add UUID to request context
+//		ctx := context.WithValue(r.Context(), "uuid", uuid)
+//		next.ServeHTTP(w, r.WithContext(ctx))
+//	})
+//}

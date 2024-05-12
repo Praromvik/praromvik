@@ -27,18 +27,20 @@ package course
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 
 	"github.com/praromvik/praromvik/handlers/utils"
 	"github.com/praromvik/praromvik/models/course"
 	"github.com/praromvik/praromvik/pkg/auth"
 	perror "github.com/praromvik/praromvik/pkg/error"
-
-	"github.com/google/uuid"
 )
 
 type Course struct {
 	*course.Course
+}
+type Lesson struct {
+	*course.Lesson
 }
 
 func (c *Course) Create(w http.ResponseWriter, r *http.Request) {
@@ -47,19 +49,18 @@ func (c *Course) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	errCode, err := c.ValidateCourseIDUniqueness()
+	errCode, err := c.ValidateNameUniqueness()
 	if err != nil {
 		perror.HandleError(w, errCode, "", err)
 		return
 	}
 
-	c.UUID = uuid.NewString()
-	userName, err := auth.GetUserUserNameFromSession(r)
+	info, err := auth.GetUserInfoFromSession(r)
 	if err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "Error on getting session", err)
 		return
 	}
-	c.Instructors = append(c.Instructors, userName)
+	c.Instructors = append(c.Instructors, *info)
 	if err := c.AddCourseDataToDB(); err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "failed to course data into database", err)
 		return
@@ -89,48 +90,34 @@ func (c *Course) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Course) Get(w http.ResponseWriter, r *http.Request) {
-	var ok bool
-	c.Course = &course.Course{}
-	ctx := r.Context()
-	c.UUID, ok = ctx.Value("uuid").(string)
-	if !ok {
-		perror.HandleError(w, http.StatusUnprocessableEntity, "",
-			fmt.Errorf("failed to extract uuid from url"))
-		return
-	}
+	c.CourseId = chi.URLParam(r, "id")
 	if err := c.Course.Get(); err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "Error on getting course.", err)
 	}
-	data, err := utils.RemovedUUID(c)
-	if err != nil {
-		perror.HandleError(w, http.StatusInternalServerError, "", err)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	if err := json.NewEncoder(w).Encode(c); err != nil {
 		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
 	}
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func (c *Course) UpdateByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Update an Course by ID")
+func (c *Course) Update(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Update an Course by Name")
 }
 
-func (c *Course) DeleteByID(w http.ResponseWriter, r *http.Request) {
-	var ok bool
-	c.Course = &course.Course{}
-	ctx := r.Context()
-	c.UUID, ok = ctx.Value("uuid").(string)
-	if !ok {
-		perror.HandleError(w, http.StatusUnprocessableEntity, "",
-			fmt.Errorf("failed to extract uuid from url"))
-		return
-	}
-	if err := c.Delete(); err != nil {
-		perror.HandleError(w, http.StatusBadRequest, "Error on getting course.", err)
-	}
-	w.WriteHeader(http.StatusOK)
-}
+//func (c *Course) Delete(w http.ResponseWriter, r *http.Request) {
+//	var ok bool
+//	c.Course = &course.Course{}
+//	ctx := r.Context()
+//	c.UUID, ok = ctx.Value("uuid").(string)
+//	if !ok {
+//		perror.HandleError(w, http.StatusUnprocessableEntity, "",
+//			fmt.Errorf("failed to extract uuid from url"))
+//		return
+//	}
+//	if err := c.Course.Delete(); err != nil {
+//		perror.HandleError(w, http.StatusBadRequest, "Error on getting course.", err)
+//	}
+//	w.WriteHeader(http.StatusOK)
+//}

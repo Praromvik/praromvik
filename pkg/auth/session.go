@@ -26,12 +26,12 @@ package auth
 
 import (
 	"context"
+	"github.com/praromvik/praromvik/models/utils"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/praromvik/praromvik/models"
 	"github.com/praromvik/praromvik/models/db/client"
 	"github.com/praromvik/praromvik/models/user"
 
@@ -49,7 +49,7 @@ func init() {
 	if err != nil {
 		log.Fatal("failed to create redis store: ", err)
 	}
-	redisStore.KeyPrefix(os.Getenv(models.SessionKey))
+	redisStore.KeyPrefix(os.Getenv(utils.SessionKey))
 }
 
 func StoreAuthenticated(w http.ResponseWriter, r *http.Request, u *user.User, valid bool) error {
@@ -57,13 +57,14 @@ func StoreAuthenticated(w http.ResponseWriter, r *http.Request, u *user.User, va
 	if err != nil {
 		return err
 	}
-	session.Values[models.Authenticated] = true
+	session.Values[utils.Authenticated] = true
 	if u != nil {
-		session.Values[models.Role] = u.Role
-		session.Values[models.UserName] = u.UserName
+		session.Values[utils.UUID] = u.UUID
+		session.Values[utils.Role] = u.Role
+		session.Values[utils.UserName] = u.UserName
 	}
-	session.Values[models.UserIP] = getIpAddress(r)
-	session.Values[models.UserAgent] = r.UserAgent()
+	session.Values[utils.UserIP] = getIpAddress(r)
+	session.Values[utils.UserAgent] = r.UserAgent()
 	if !valid {
 		session.Options.MaxAge = -1
 	}
@@ -75,20 +76,20 @@ func IsAuthenticated(r *http.Request) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	authValue := session.Values[models.Authenticated].(bool)
+	authValue := session.Values[utils.Authenticated].(bool)
 	return authValue, nil
 }
 
-func GetSessionRole(r *http.Request) (models.RoleType, error) {
+func GetSessionRole(r *http.Request) (utils.RoleType, error) {
 	session, err := redisStore.Get(r, sessionTokenName)
 	if err != nil {
 		return "", err
 	}
-	role, ok := session.Values[models.Role]
+	role, ok := session.Values[utils.Role]
 	if !ok || role == nil {
-		return models.None, nil
+		return utils.None, nil
 	}
-	return models.RoleType(role.(string)), nil
+	return utils.RoleType(role.(string)), nil
 }
 
 func SessionValid(r *http.Request) (bool, error) {
@@ -97,17 +98,16 @@ func SessionValid(r *http.Request) (bool, error) {
 		return false, err
 	}
 	return !session.IsNew &&
-		session.Values[models.UserIP] == getIpAddress(r) &&
-		session.Values[models.UserAgent] == r.UserAgent(), nil
+		session.Values[utils.UserIP] == getIpAddress(r) &&
+		session.Values[utils.UserAgent] == r.UserAgent(), nil
 }
 
-func GetUserUserNameFromSession(r *http.Request) (string, error) {
+func GetUserInfoFromSession(r *http.Request) (*utils.Info, error) {
 	session, err := redisStore.Get(r, sessionTokenName)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	val := session.Values[models.UserName]
-	return val.(string), err
+	return &utils.Info{Name: session.Values[utils.UserName].(string), UUID: session.Values[utils.UUID].(string)}, nil
 }
 
 func getIpAddress(r *http.Request) string {

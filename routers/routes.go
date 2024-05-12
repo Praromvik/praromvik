@@ -58,24 +58,43 @@ func LoadRoutes() *chi.Mux {
 
 func loadUserAuthRoutes(r chi.Router) {
 	userHandler := &user.User{}
-	r.HandleFunc("/signup", userHandler.SignUp)
-	r.HandleFunc("/signin", userHandler.SignIn)
-	r.HandleFunc("/signout", userHandler.SignOut)
+	r.Put("/signup", userHandler.SignUp)
+	r.Put("/signin", userHandler.SignIn)
+	r.Delete("/signout", userHandler.SignOut)
+	r.With(middleware.SecurityMiddleware).Get("/user/{userName}", userHandler.Get)
 }
 
 func loadCourseRoutes(r chi.Router) {
 	r.Use(middleware.SecurityMiddleware)
-	courseHandler := &course.Course{}
+	//r.Route("/lesson", loadLessonRoutes)
+	handler := &course.Course{}
 
-	r.Get("/list", courseHandler.List)
-	r.With(middleware.AddCourseUUIDToCtx).Get("/{id}", courseHandler.Get)
+	r.Get("/list", handler.List)
+	r.Get("/{id}", handler.Get)
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AdminOrModeratorAccess)
-		r.Post("/", courseHandler.Create)
-		r.With(middleware.AddCourseUUIDToCtx).Put("/{id}", courseHandler.UpdateByID)
+		r.Post("/", handler.Create)
+		//r.With(middleware.AddCourseIDToCtx).Put("/{name}", handler.Update)
 	})
 
-	// Require admin access and use AddCourseUUIDToCtx middleware
-	r.With(middleware.AdminAccess, middleware.AddCourseUUIDToCtx).Delete("/{id}", courseHandler.DeleteByID)
+	// Require admin access and use AddCourseIDToCtx middleware
+	//r.With(middleware.AdminAccess, middleware.AddCourseIDToCtx).Delete("/{name}", handler.Delete)
+
 }
+
+//func loadLessonRoutes(r chi.Router) {
+//	handler := &course.Lesson{}
+//	r.Get("/list", handler.List)
+//	r.With(middleware.AddCourseIDToCtx).Get("/{name}", handler.Get)
+//
+//	r.Group(func(r chi.Router) {
+//		r.Use(middleware.AdminOrModeratorAccess)
+//		r.Post("/", handler.Create)
+//		r.With(middleware.AddCourseIDToCtx).Put("/{name}", handler.Update)
+//	})
+//
+//	// Require admin access and use AddCourseIDToCtx middleware
+//	r.With(middleware.AdminAccess, middleware.AddCourseIDToCtx).Delete("/{name}", handler.Delete)
+//
+//}

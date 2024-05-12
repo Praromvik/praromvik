@@ -27,13 +27,11 @@ package course
 import (
 	"context"
 	"errors"
-	  "fmt"
-
-	"net/http"
-
+	"fmt"
 	"github.com/praromvik/praromvik/models/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"net/http"
 )
 
 var (
@@ -42,7 +40,7 @@ var (
 
 func (c *Course) Get() error {
 	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
-	result, err := mongoDB.GetDocument(bson.D{{Key: "uuid", Value: c.UUID}})
+	result, err := mongoDB.GetDocument(bson.D{{Key: "CourseId", Value: c.CourseId}})
 	if err != nil {
 		return err
 	}
@@ -52,13 +50,13 @@ func (c *Course) Get() error {
 	return nil
 }
 
-func (c *Course) Delete() error {
-	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
-	if err := mongoDB.DeleteDocument(bson.D{{Key: "uuid", Value: c.UUID}}); err != nil {
-		return err
-	}
-	return nil
-}
+//func (c *Course) Delete() error {
+//	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
+//	if err := mongoDB.DeleteDocument(bson.D{{Key: "uuid", Value: c.UUID}}); err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 func (c *Course) List() ([]Course, error) {
 	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
@@ -73,9 +71,9 @@ func (c *Course) List() ([]Course, error) {
 	return list, nil
 }
 
-func (c *Course) ValidateCourseIDUniqueness() (int, error) {
+func (c *Course) ValidateNameUniqueness() (int, error) {
 	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
-	result, err := mongoDB.GetDocument(bson.D{{Key: "courseId", Value: c.CourseId}})
+	result, err := mongoDB.GetDocument(bson.D{{Key: "_id", Value: c.CourseId}})
 	if err != nil {
 		return http.StatusBadRequest, err
 	}
@@ -92,15 +90,28 @@ func (c *Course) AddCourseDataToDB() error {
 	return err
 }
 
-func GetCourseUUID(courseID string) (string, error) {
-	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
-	result, err := mongoDB.GetDocument(bson.D{{Key: "courseId", Value: courseID}})
-	if err != nil {
-		return "", err
-	}
-	course := &Course{}
-	if err := result.Decode(course); err != nil {
-		return "", err
-	}
-	return course.UUID, nil
-}
+//func GetCourseUUID(name string) (string, error) {
+//	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
+//	result, err := mongoDB.GetDocument(bson.D{{Key: "name", Value: name}})
+//	if err != nil {
+//		return "", err
+//	}
+//	course := &Course{}
+//	if err := result.Decode(course); err != nil {
+//		return "", err
+//	}
+//	return course.UUID, nil
+//}
+
+//func GetLessonUUID(name string) (string, error) {
+//	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
+//	result, err := mongoDB.GetDocument(bson.D{{Key: "name", Value: name}})
+//	if err != nil {
+//		return "", err
+//	}
+//	course := &Course{}
+//	if err := result.Decode(course); err != nil {
+//		return "", err
+//	}
+//	return course.UUID, nil
+//}

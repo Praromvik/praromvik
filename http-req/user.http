@@ -22,4 +22,10 @@ Content-Type: application/json
 > {% client.global.set("PRAROMVIK", response.body.json.token); %}
 
 
+###
+POST http://localhost:3030/user/upload
+Content-Type: multipart/form-data
 
+{
+'image=@"/home/anisur/Downloads/100daysleetcode.png"'
+}

@@ -24,11 +24,16 @@ SOFTWARE.
 
 package user
 
+import "github.com/praromvik/praromvik/models/utils"
+
 type User struct {
-	UserName string `json:"userName" bson:"userName"`
-	Email    string `json:"email" bson:"email"`
-	Password string `json:"password" bson:"password"`
-	Phone    string `json:"phone" bson:"phone"`
-	Role     string `json:"role" bson:"role"`
-	UUID     string `json:"uuid" bson:"uuid"`
+	UserName         string       `json:"userName" bson:"userName"`
+	Certificates     []string     `json:"certificates" bson:"certificates"`
+	EnrolledCourses  []utils.Info `json:"enrolledCourses" bson:"enrolledCourses"`
+	ParticipateExams []utils.Info `json:"participateExams" bson:"participateExams"`
+	Email            string       `json:"email" bson:"email"`
+	Password         string       `json:"password" bson:"password"`
+	Phone            string       `json:"phone" bson:"phone"`
+	Role             string       `json:"role" bson:"role"`
+	UUID             string       `json:"uuid" bson:"uuid"`
 }

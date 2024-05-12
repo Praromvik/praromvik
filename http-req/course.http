@@ -17,7 +17,7 @@ Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
 {
-  "courseId": "advanced-golang",
+  "name": "advanced-golang",
   "title": "Go: The Complete Developer's Guide (Golang)",
   "description": "Master the fundamentals and advanced features of the Go Programming Language (Golang)"
 }
@@ -29,7 +29,7 @@ Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
 {
-  "courseId": "prometheus-certified-associate-pca",
+  "_id": "prometheus-certified-associate-pca",
   "title": "Prometheus Certified Associate (PCA)",
   "description": "Prometheus is an open-source monitoring & alerting solution that collects metrics data and stores it in a time-series database."
 }
