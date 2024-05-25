@@ -110,3 +110,39 @@ func (m Mongo) getDBCollection() (*mongo.Collection, error) {
 	}
 	return collection, nil
 }
+
+func (m Mongo) Sync(query string, id string, bsonName string, elementId string) error {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return err
+	}
+	// Check if the field is null (unset), and if so, initialize it as an empty array
+	var doc bson.M
+	err = collection.FindOne(context.TODO(), bson.M{"_id": id}).Decode(&doc)
+	if err != nil {
+		return fmt.Errorf("failed to find document: %v", err)
+	}
+
+	if doc[bsonName] == nil {
+		// Initialize the field as an empty array
+		_, err = collection.UpdateOne(
+			context.TODO(),
+			bson.M{"_id": id},
+			bson.M{"$set": bson.M{bsonName: []string{elementId}}},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to initialize field: %v", err)
+		}
+	} else {
+		// Field is not null, proceed with pushing the element
+		_, err = collection.UpdateOne(
+			context.TODO(),
+			bson.M{"_id": id},
+			bson.M{query: bson.M{bsonName: elementId}},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to sync document: %v", err)
+		}
+	}
+	return err
+}

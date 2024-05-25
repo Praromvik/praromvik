@@ -28,10 +28,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/praromvik/praromvik/models/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"net/http"
 )
 
 var (
@@ -40,7 +41,7 @@ var (
 
 func (c *Course) Get() error {
 	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
-	result, err := mongoDB.GetDocument(bson.D{{Key: "CourseId", Value: c.CourseId}})
+	result, err := mongoDB.GetDocument(bson.D{{Key: "_id", Value: c.CourseId}})
 	if err != nil {
 		return err
 	}
@@ -50,13 +51,31 @@ func (c *Course) Get() error {
 	return nil
 }
 
-//func (c *Course) Delete() error {
-//	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
-//	if err := mongoDB.DeleteDocument(bson.D{{Key: "uuid", Value: c.UUID}}); err != nil {
-//		return err
-//	}
-//	return nil
-//}
+func (c *Course) Delete() error {
+	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
+	if err := mongoDB.DeleteDocument(bson.D{{Key: "_id", Value: c.CourseId}}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Course) Update() error {
+	course := &Course{}
+	filter := bson.D{{Key: "_id", Value: c.CourseId}}
+	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
+	result, err := mongoDB.GetDocument(filter)
+	if err != nil {
+		return err
+	}
+	if err := result.Decode(course); err != nil {
+		return err
+	}
+	fmt.Println("Update Couse:", c)
+
+	db.MergeStruct(course, *c)
+	err = mongoDB.UpdateDocument(filter, course)
+	return err
+}
 
 func (c *Course) List() ([]Course, error) {
 	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
@@ -84,7 +103,7 @@ func (c *Course) ValidateNameUniqueness() (int, error) {
 	return http.StatusOK, nil
 }
 
-func (c *Course) AddCourseDataToDB() error {
+func (c *Course) Create() error {
 	mongoDB := db.Mongo{Namespaces: []db.Namespace{courseMongoNamespace}}
 	err := mongoDB.AddDocument(c)
 	return err

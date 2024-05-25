@@ -27,10 +27,10 @@ package user
 import (
 	"errors"
 	"fmt"
-	"github.com/praromvik/praromvik/models/utils"
 	"net/http"
 
 	"github.com/praromvik/praromvik/models/db"
+	"github.com/praromvik/praromvik/models/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"

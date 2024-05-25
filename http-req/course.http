@@ -17,7 +17,7 @@ Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
 {
-  "name": "advanced-golang",
+  "_id": "advanced-golang",
   "title": "Go: The Complete Developer's Guide (Golang)",
   "description": "Master the fundamentals and advanced features of the Go Programming Language (Golang)"
 }
@@ -38,6 +38,17 @@ Content-Type: application/json
 # Get Course
 GET http://localhost:3030/course/prometheus-certified-associate-pca
 Authorization: Bearer {{PRAROMVIK}}
+
+###
+# Update Course
+PUT http://localhost:3030/course/prometheus-certified-associate-pca
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json
+
+{
+  "price": 500
+}
+
 
 ###
 # Delete Course

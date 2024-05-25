@@ -24,41 +24,33 @@ SOFTWARE.
 
 package course
 
-import (
-	"github.com/praromvik/praromvik/models/utils"
-	"google.golang.org/genproto/googleapis/type/date"
-)
-
 type Course struct {
-	CourseId    string       `json:"_id" bson:"_id"`
-	Title       string       `json:"title" bson:"title"`
-	Description string       `json:"description" bson:"description"`
-	Instructors []utils.Info `json:"instructors" bson:"instructors"`
-	Moderators  []string     `json:"moderators" bson:"moderators"`
-	StartDate   date.Date    `json:"startDate" bson:"startDate"`
-	EndDate     date.Date    `json:"endDate" bson:"endDate"`
-	Duration    int          `json:"duration" bson:"duration"` // Duration in week
-	Capacity    int          `json:"capacity" bson:"capacity"`
-	Students    []string     `json:"students" bson:"students"`
-	Price       int          `json:"price" bson:"price"`
-	Image       []byte       `json:"image" bson:"-"`
+	CourseId    string   `json:"_id" bson:"_id"`
+	Title       string   `json:"title" bson:"title"`
+	Description string   `json:"description" bson:"description"`
+	Instructors []string `json:"instructors" bson:"instructors"`
+	Moderators  []string `json:"moderators" bson:"moderators"`
+	StartDate   string   `json:"startDate" bson:"startDate"`
+	EndDate     string   `json:"endDate" bson:"endDate"`
+	Duration    int      `json:"duration" bson:"duration"` // Duration in week
+	Capacity    int      `json:"capacity" bson:"capacity"`
+	Students    []string `json:"students" bson:"students"`
+	Price       int      `json:"price" bson:"price"`
+	Image       []byte   `json:"image" bson:"-"`
 }
 
 type Lesson struct {
-	LessonID string       `json:"_id" bson:"_id"`
-	Title    string       `json:"title" bson:"title"`
-	Contents []ContentRef `json:"contents" bson:"contents"`
-}
-
-type ContentRef struct {
-	ID    string `json:"id" bson:"id"`
-	Title string `json:"title" bson:"title"`
+	LessonID  string   `json:"_id" bson:"_id"`
+	CourseRef string   `json:"courseRef" bson:"courseRef"`
+	Title     string   `json:"title" bson:"title"`
+	Contents  []string `json:"contents" bson:"contents"`
 }
 
 type Content struct {
 	ContentID string `json:"_id" bson:"_id"`
+	CourseRef string `json:"courseRef" bson:"courseRef"`
+	LessonRef string `json:"lessonRef" bson:"lessonRef"`
 	Title     string `json:"title" bson:"title"`
 	Type      string `json:"type" bson:"type"` // video, resource, quiz, lab
 	Data      []byte `json:"data" bson:"data"`
-	LessonRef string `json:"lessonRef" bson:"lessonRef"`
 }

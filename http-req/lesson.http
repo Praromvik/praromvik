@@ -1,0 +1,42 @@
+###
+# SignIn endpoint
+POST http://localhost:3030/signin
+Content-Type: application/json
+
+{
+  "userName": "admin",
+  "password": "itiswhatitis"
+}
+
+
+###
+# Create Lesson 1
+POST http://localhost:3030/course/advanced-golang/lesson
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json
+
+{
+  "_id": "introduction"
+}
+
+###
+# Create Lesson 2
+POST http://localhost:3030/course/advanced-golang/lesson
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json
+
+{
+  "_id": "concurrency"
+}
+
+
+###
+# Get Lesson 1
+GET http://localhost:3030/course/advanced-golang/lesson/concurrency
+Authorization: Bearer {{PRAROMVIK}}
+
+
+###
+# List
+GET http://localhost:3030/course/advanced-golang/lesson/list
+Authorization: Bearer {{PRAROMVIK}}

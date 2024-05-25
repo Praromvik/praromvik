@@ -35,6 +35,8 @@ type Namespace struct {
 	Collection string
 }
 
+// Here, You must have to provide Structure kind instead of ptr. Mention that for any unexported field inside of struct will give panic.
+
 func MergeStruct(oldStruct interface{}, newStruct interface{}) {
 	oldValue, newValue := reflect.ValueOf(oldStruct).Elem(), reflect.ValueOf(newStruct)
 	for i := 0; i < oldValue.NumField(); i++ {

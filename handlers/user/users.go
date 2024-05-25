@@ -26,16 +26,15 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
-	"github.com/go-chi/chi/v5"
-	hutils "github.com/praromvik/praromvik/handlers/utils"
-	mutils "github.com/praromvik/praromvik/models/utils"
 	"net/http"
 
+	hutils "github.com/praromvik/praromvik/handlers/utils"
 	"github.com/praromvik/praromvik/models/user"
+	mutils "github.com/praromvik/praromvik/models/utils"
 	"github.com/praromvik/praromvik/pkg/auth"
 	perror "github.com/praromvik/praromvik/pkg/error"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -77,13 +76,11 @@ func (u User) SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u User) SignIn(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("---------------debug---------------")
 	if r.Method == http.MethodPost {
 		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
 			perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 			return
 		}
-		fmt.Println(u.User)
 		valid, err := u.User.VerifyLoginData()
 		if err != nil && status.Code(err) != codes.NotFound {
 			perror.HandleError(w, http.StatusUnauthorized, "failed to login", err)
@@ -114,25 +111,21 @@ func (u User) SignOut(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u User) ProvideRoleToUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
-			perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
-			return
-		}
-
-		if err := u.User.FetchAndSetUUIDFromDB(); err != nil {
-			perror.HandleError(w, http.StatusBadRequest, "", err)
-			return
-		}
-
-		if err := u.UpdateUserDataToDB(); err != nil {
-			perror.HandleError(w, http.StatusBadRequest, "Error on update user", err)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+		return
 	}
+
+	if err := u.User.FetchAndSetUUIDFromDB(); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "", err)
+		return
+	}
+
+	if err := u.UpdateUserDataToDB(); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on update user", err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func (u User) Get(w http.ResponseWriter, r *http.Request) {

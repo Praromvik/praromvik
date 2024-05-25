@@ -27,20 +27,19 @@ package course
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"net/http"
+	"slices"
 
 	"github.com/praromvik/praromvik/handlers/utils"
 	"github.com/praromvik/praromvik/models/course"
 	"github.com/praromvik/praromvik/pkg/auth"
 	perror "github.com/praromvik/praromvik/pkg/error"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type Course struct {
 	*course.Course
-}
-type Lesson struct {
-	*course.Lesson
 }
 
 func (c *Course) Create(w http.ResponseWriter, r *http.Request) {
@@ -48,20 +47,20 @@ func (c *Course) Create(w http.ResponseWriter, r *http.Request) {
 		perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 		return
 	}
-
 	errCode, err := c.ValidateNameUniqueness()
 	if err != nil {
 		perror.HandleError(w, errCode, "", err)
 		return
 	}
-
 	info, err := auth.GetUserInfoFromSession(r)
 	if err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "Error on getting session", err)
 		return
 	}
-	c.Instructors = append(c.Instructors, *info)
-	if err := c.AddCourseDataToDB(); err != nil {
+	if !slices.Contains(c.Instructors, info.Name) {
+		c.Instructors = append(c.Instructors, info.Name)
+	}
+	if err := c.Course.Create(); err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "failed to course data into database", err)
 		return
 	}
@@ -90,6 +89,7 @@ func (c *Course) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Course) Get(w http.ResponseWriter, r *http.Request) {
+	c.Course = &course.Course{}
 	c.CourseId = chi.URLParam(r, "id")
 	if err := c.Course.Get(); err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "Error on getting course.", err)
@@ -98,26 +98,28 @@ func (c *Course) Get(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(c); err != nil {
 		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
 	}
-
 	w.WriteHeader(http.StatusOK)
 }
 
 func (c *Course) Update(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Update an Course by Name")
+	c.Course = &course.Course{}
+	c.CourseId = chi.URLParam(r, "id")
+	if err := json.NewDecoder(r.Body).Decode(&c.Course); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+		return
+	}
+	if err := c.Course.Update(); err != nil {
+		fmt.Println(err)
+		perror.HandleError(w, http.StatusBadRequest, "Error on updating course", err)
+		return
+	}
 }
 
-//func (c *Course) Delete(w http.ResponseWriter, r *http.Request) {
-//	var ok bool
-//	c.Course = &course.Course{}
-//	ctx := r.Context()
-//	c.UUID, ok = ctx.Value("uuid").(string)
-//	if !ok {
-//		perror.HandleError(w, http.StatusUnprocessableEntity, "",
-//			fmt.Errorf("failed to extract uuid from url"))
-//		return
-//	}
-//	if err := c.Course.Delete(); err != nil {
-//		perror.HandleError(w, http.StatusBadRequest, "Error on getting course.", err)
-//	}
-//	w.WriteHeader(http.StatusOK)
-//}
+func (c *Course) Delete(w http.ResponseWriter, r *http.Request) {
+	c.Course = &course.Course{}
+	c.CourseId = chi.URLParam(r, "id")
+	if err := c.Course.Delete(); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on deleting course.", err)
+	}
+	w.WriteHeader(http.StatusOK)
+}

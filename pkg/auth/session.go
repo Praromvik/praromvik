@@ -26,7 +26,6 @@ package auth
 
 import (
 	"context"
-	"github.com/praromvik/praromvik/models/utils"
 	"log"
 	"net/http"
 	"os"
@@ -34,6 +33,7 @@ import (
 
 	"github.com/praromvik/praromvik/models/db/client"
 	"github.com/praromvik/praromvik/models/user"
+	"github.com/praromvik/praromvik/models/utils"
 
 	rstore "github.com/rbcervilla/redisstore/v8"
 )

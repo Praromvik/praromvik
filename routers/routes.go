@@ -41,7 +41,7 @@ func LoadRoutes() *chi.Mux {
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 	// Apply global middleware
@@ -55,46 +55,52 @@ func LoadRoutes() *chi.Mux {
 	router.Route("/course", loadCourseRoutes)
 	return router
 }
-
 func loadUserAuthRoutes(r chi.Router) {
 	userHandler := &user.User{}
-	r.Put("/signup", userHandler.SignUp)
-	r.Put("/signin", userHandler.SignIn)
+	r.Post("/signup", userHandler.SignUp)
+	r.Post("/signin", userHandler.SignIn)
 	r.Delete("/signout", userHandler.SignOut)
 	r.With(middleware.SecurityMiddleware).Get("/user/{userName}", userHandler.Get)
 }
 
 func loadCourseRoutes(r chi.Router) {
 	r.Use(middleware.SecurityMiddleware)
-	//r.Route("/lesson", loadLessonRoutes)
-	handler := &course.Course{}
+	r.Route("/{courseRef}/lesson", loadLessonRoutes)
+	r.Route("/{courseRef}/content", loadContentRoutes)
 
+	handler := &course.Course{}
 	r.Get("/list", handler.List)
 	r.Get("/{id}", handler.Get)
-
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AdminOrModeratorAccess)
 		r.Post("/", handler.Create)
-		//r.With(middleware.AddCourseIDToCtx).Put("/{name}", handler.Update)
+		r.Put("/{id}", handler.Update)
 	})
-
-	// Require admin access and use AddCourseIDToCtx middleware
-	//r.With(middleware.AdminAccess, middleware.AddCourseIDToCtx).Delete("/{name}", handler.Delete)
-
+	//Require admin access and use AddCourseIDToCtx middleware
+	r.With(middleware.AdminAccess).Delete("/{id}", handler.Delete)
 }
 
-//func loadLessonRoutes(r chi.Router) {
-//	handler := &course.Lesson{}
-//	r.Get("/list", handler.List)
-//	r.With(middleware.AddCourseIDToCtx).Get("/{name}", handler.Get)
-//
-//	r.Group(func(r chi.Router) {
-//		r.Use(middleware.AdminOrModeratorAccess)
-//		r.Post("/", handler.Create)
-//		r.With(middleware.AddCourseIDToCtx).Put("/{name}", handler.Update)
-//	})
-//
-//	// Require admin access and use AddCourseIDToCtx middleware
-//	r.With(middleware.AdminAccess, middleware.AddCourseIDToCtx).Delete("/{name}", handler.Delete)
-//
-//}
+func loadLessonRoutes(r chi.Router) {
+	handler := &course.Lesson{}
+	r.Get("/list", handler.List)
+	r.Get("/{id}", handler.Get)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AdminOrModeratorAccess)
+		r.Post("/", handler.Create)
+	})
+	//Require admin access and use AddCourseIDToCtx middleware
+	r.With(middleware.AdminAccess).Delete("/{id}", handler.Delete)
+}
+
+func loadContentRoutes(r chi.Router) {
+	handler := &course.Content{}
+	r.Get("/list", handler.List)
+	r.Get("/{id}", handler.Get)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AdminOrModeratorAccess)
+		r.Post("/", handler.Create)
+	})
+	//Require admin access and use AddCourseIDToCtx middleware
+	r.With(middleware.AdminAccess).Delete("/{id}", handler.Delete)
+
+}

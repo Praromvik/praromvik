@@ -25,9 +25,9 @@ SOFTWARE.
 package middleware
 
 import (
-	"github.com/praromvik/praromvik/models/utils"
 	"net/http"
 
+	"github.com/praromvik/praromvik/models/utils"
 	"github.com/praromvik/praromvik/pkg/auth"
 	perror "github.com/praromvik/praromvik/pkg/error"
 
