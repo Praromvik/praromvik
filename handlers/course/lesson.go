@@ -26,7 +26,9 @@ package course
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/praromvik/praromvik/models/course"
 	perror "github.com/praromvik/praromvik/pkg/error"
@@ -44,15 +46,17 @@ func (l *Lesson) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	l.CourseRef = chi.URLParam(r, "courseRef")
-	errCode, err := l.ValidateNameUniqueness()
+	errCode, err := course.ValidateNameUniqueness(l.Lesson)
 	if err != nil {
 		perror.HandleError(w, errCode, "", err)
 		return
 	}
-	if err := l.Lesson.Create(); err != nil {
-		perror.HandleError(w, http.StatusBadRequest, "failed to create course data into database", err)
+	if err := course.Create(l.Lesson); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "failed to create course lesson data into database", err)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (l *Lesson) Get(w http.ResponseWriter, r *http.Request) {
@@ -60,12 +64,25 @@ func (l *Lesson) Get(w http.ResponseWriter, r *http.Request) {
 		CourseRef: chi.URLParam(r, "courseRef"),
 		LessonID:  chi.URLParam(r, "id"),
 	}
-	if err := l.Lesson.Get(); err != nil {
-		perror.HandleError(w, http.StatusBadRequest, "Error on getting lesson.", err)
+	// Fetch document from database
+	document, err := course.Get(l.Lesson)
+	if err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting course lesson", err)
+		return
 	}
+
+	// Check if the document is of the expected type
+	expectedType := reflect.TypeOf(&course.Lesson{})
+	if !isTypeValid(document, expectedType) {
+		perror.HandleError(w, http.StatusBadRequest, "", fmt.Errorf("document is not of type %s", expectedType))
+		return
+	}
+
+	// Encode the document to JSON and send the response
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(l); err != nil {
+	if err := json.NewEncoder(w).Encode(document.(*course.Lesson)); err != nil {
 		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
@@ -75,14 +92,23 @@ func (l *Lesson) List(w http.ResponseWriter, r *http.Request) {
 		CourseRef: chi.URLParam(r, "courseRef"),
 		LessonID:  chi.URLParam(r, "id"),
 	}
-	list, err := l.Lesson.List()
+	documents, err := course.List(l.Lesson)
 	if err != nil {
-		perror.HandleError(w, http.StatusBadRequest, "Error on getting course list.", err)
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting course lesson list.", err)
 	}
 
+	// Check if the document is of the expected type
+	expectedType := reflect.TypeOf(&[]course.Lesson{})
+	if !isTypeValid(documents, expectedType) {
+		perror.HandleError(w, http.StatusBadRequest, "", fmt.Errorf("document is not of type %s", expectedType))
+		return
+	}
+
+	// Encode the documents to JSON and send the response
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(list); err != nil {
+	if err := json.NewEncoder(w).Encode(documents.(*[]course.Lesson)); err != nil {
 		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
+		return
 	}
 }
 
@@ -91,8 +117,8 @@ func (l *Lesson) Delete(w http.ResponseWriter, r *http.Request) {
 		CourseRef: chi.URLParam(r, "courseRef"),
 		LessonID:  chi.URLParam(r, "id"),
 	}
-	if err := l.Lesson.Delete(); err != nil {
-		perror.HandleError(w, http.StatusBadRequest, "Error on deleting lesson.", err)
+	if err := course.Delete(l.Lesson); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on deleting course lesson.", err)
 	}
 	w.WriteHeader(http.StatusOK)
 }

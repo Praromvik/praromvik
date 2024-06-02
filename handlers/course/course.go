@@ -1,7 +1,7 @@
 /*
 MIT License
 
-# Copyright (c) 2024 Praromvik
+Copyright (c) 2024 Praromvik
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,9 +28,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"slices"
 
-	"github.com/praromvik/praromvik/handlers/utils"
 	"github.com/praromvik/praromvik/models/course"
 	"github.com/praromvik/praromvik/pkg/auth"
 	perror "github.com/praromvik/praromvik/pkg/error"
@@ -47,7 +47,7 @@ func (c *Course) Create(w http.ResponseWriter, r *http.Request) {
 		perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 		return
 	}
-	errCode, err := c.ValidateNameUniqueness()
+	errCode, err := course.ValidateNameUniqueness(c.Course)
 	if err != nil {
 		perror.HandleError(w, errCode, "", err)
 		return
@@ -60,43 +60,62 @@ func (c *Course) Create(w http.ResponseWriter, r *http.Request) {
 	if !slices.Contains(c.Instructors, info.Name) {
 		c.Instructors = append(c.Instructors, info.Name)
 	}
-	if err := c.Course.Create(); err != nil {
+	if err := course.Create(c.Course); err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "failed to course data into database", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Course) List(w http.ResponseWriter, r *http.Request) {
+	// Initialize Course instance
+	c.Course = &course.Course{}
+	// Fetch documents from the database
+	documents, err := course.List(c.Course)
+	if err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting course list.", err)
+		return
+	}
+
+	// Check if the document is of the expected type
+	expectedType := reflect.TypeOf(&[]course.Course{})
+	if !isTypeValid(documents, expectedType) {
+		perror.HandleError(w, http.StatusBadRequest, "", fmt.Errorf("document is not of type %s", expectedType))
+		return
+	}
+
+	// Encode the documents to JSON and send the response
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(documents.(*[]course.Course)); err != nil {
+		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
 		return
 	}
 }
 
-func (c *Course) List(w http.ResponseWriter, r *http.Request) {
-	c.Course = &course.Course{}
-	courseList, err := c.Course.List()
-	if err != nil {
-		perror.HandleError(w, http.StatusBadRequest, "Error on getting course list.", err)
-	}
-	var mapList []map[string]interface{}
-	for i := range courseList {
-		val := &courseList[i]
-		data, err := utils.RemovedUUID(val)
-		if err != nil {
-			perror.HandleError(w, http.StatusInternalServerError, "", err)
-			return
-		}
-		mapList = append(mapList, data)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(mapList); err != nil {
-		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
-	}
-}
-
 func (c *Course) Get(w http.ResponseWriter, r *http.Request) {
+	// Initialize Course instance
 	c.Course = &course.Course{}
 	c.CourseId = chi.URLParam(r, "id")
-	if err := c.Course.Get(); err != nil {
+	// Fetch document from database
+	document, err := course.Get(c.Course)
+	if err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "Error on getting course.", err)
+		return
 	}
+
+	// Check if the document is of the expected type
+	expectedType := reflect.TypeOf(&course.Course{})
+	if !isTypeValid(document, expectedType) {
+		perror.HandleError(w, http.StatusBadRequest, "", fmt.Errorf("document is not of type %s", expectedType))
+		return
+	}
+
+	// Encode the document to JSON and send the response
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(c); err != nil {
+	if err := json.NewEncoder(w).Encode(document.(*course.Course)); err != nil {
 		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
@@ -108,7 +127,7 @@ func (c *Course) Update(w http.ResponseWriter, r *http.Request) {
 		perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
 		return
 	}
-	if err := c.Course.Update(); err != nil {
+	if err := course.Update(c.Course); err != nil {
 		fmt.Println(err)
 		perror.HandleError(w, http.StatusBadRequest, "Error on updating course", err)
 		return
@@ -118,8 +137,13 @@ func (c *Course) Update(w http.ResponseWriter, r *http.Request) {
 func (c *Course) Delete(w http.ResponseWriter, r *http.Request) {
 	c.Course = &course.Course{}
 	c.CourseId = chi.URLParam(r, "id")
-	if err := c.Course.Delete(); err != nil {
+	if err := course.Delete(c.Course); err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "Error on deleting course.", err)
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func isTypeValid(document interface{}, expectedType reflect.Type) bool {
+	docValue := reflect.ValueOf(document)
+	return docValue.Kind() == reflect.Ptr && docValue.Type() == expectedType
 }

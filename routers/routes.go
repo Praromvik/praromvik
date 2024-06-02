@@ -76,7 +76,7 @@ func loadCourseRoutes(r chi.Router) {
 		r.Post("/", handler.Create)
 		r.Put("/{id}", handler.Update)
 	})
-	//Require admin access and use AddCourseIDToCtx middleware
+	//Require admin access
 	r.With(middleware.AdminAccess).Delete("/{id}", handler.Delete)
 }
 
@@ -88,7 +88,7 @@ func loadLessonRoutes(r chi.Router) {
 		r.Use(middleware.AdminOrModeratorAccess)
 		r.Post("/", handler.Create)
 	})
-	//Require admin access and use AddCourseIDToCtx middleware
+	//Require admin access
 	r.With(middleware.AdminAccess).Delete("/{id}", handler.Delete)
 }
 
@@ -100,7 +100,6 @@ func loadContentRoutes(r chi.Router) {
 		r.Use(middleware.AdminOrModeratorAccess)
 		r.Post("/", handler.Create)
 	})
-	//Require admin access and use AddCourseIDToCtx middleware
+	//Require admin access
 	r.With(middleware.AdminAccess).Delete("/{id}", handler.Delete)
-
 }

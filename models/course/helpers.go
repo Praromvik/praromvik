@@ -22,29 +22,56 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package db
+package course
 
 import (
-	"reflect"
+	"github.com/praromvik/praromvik/models/db"
 )
 
-type Namespaces []Namespace
-
-type Namespace struct {
-	Database   string
-	Collection string
+type Document interface {
+	GetID() interface{}
+	GetNamespace() db.Namespace
 }
 
-// Here, You must have to provide Structure kind instead of ptr. Mention that for any unexported field inside of struct will give panic.
-
-func MergeStruct(oldStruct interface{}, newStruct interface{}) {
-	oldValue, newValue := reflect.ValueOf(oldStruct).Elem(), reflect.ValueOf(newStruct).Elem()
-	for i := 0; i < oldValue.NumField(); i++ {
-		oldFieldValue, newFieldValue := oldValue.Field(i), newValue.Field(i)
-		if oldFieldValue.Kind() == reflect.Struct {
-			MergeStruct(oldFieldValue.Addr().Interface(), newFieldValue.Interface())
-		} else if !reflect.DeepEqual(newFieldValue.Interface(), reflect.Zero(newFieldValue.Type()).Interface()) {
-			oldFieldValue.Set(newFieldValue)
-		}
+func (c *Course) GetNamespace() db.Namespace {
+	return db.Namespace{
+		Database:   "praromvik",
+		Collection: "courses",
 	}
 }
+
+func (l *Lesson) GetNamespace() db.Namespace {
+	return db.Namespace{
+		Database:   l.CourseRef,
+		Collection: "lessons",
+	}
+}
+
+func (c *Content) GetNamespace() db.Namespace {
+	return db.Namespace{
+		Database:   c.CourseRef,
+		Collection: "contents",
+	}
+}
+
+func (l *Lesson) GetID() interface{} {
+	return l.LessonID
+}
+
+func (c *Course) GetID() interface{} {
+	return c.CourseId
+}
+
+func (c *Content) GetID() interface{} {
+	return c.ContentID
+}
+
+// Another Approach to set Value to pointer.
+//func (c *Course) SetDocument(document interface{}) error {
+//	doc, ok := document.(*Course)
+//	if !ok {
+//		return fmt.Errorf("document is not of type %s", reflect.TypeOf(c))
+//	}
+//	*c = *doc
+//	return nil
+//}

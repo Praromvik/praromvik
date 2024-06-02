@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/praromvik/praromvik/models/course"
 	perror "github.com/praromvik/praromvik/pkg/error"
@@ -45,15 +46,23 @@ func (c *Content) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c.CourseRef = chi.URLParam(r, "courseRef")
-	errCode, err := c.ValidateNameUniqueness()
+	errCode, err := course.ValidateNameUniqueness(c.Content)
 	if err != nil {
 		perror.HandleError(w, errCode, "", err)
 		return
 	}
-	if err := c.Content.Create(); err != nil {
-		perror.HandleError(w, http.StatusBadRequest, "failed to create course data into database", err)
+	if err := course.Create(c.Content); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "failed to create course content data into database", err)
 		return
 	}
+
+	if err := course.Sync(&course.Lesson{
+		CourseRef: c.Content.CourseRef,
+	}, "$push", c.LessonRef, "contents", c.ContentID); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on syncing content to lesson", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (c *Content) Get(w http.ResponseWriter, r *http.Request) {
@@ -61,14 +70,25 @@ func (c *Content) Get(w http.ResponseWriter, r *http.Request) {
 		CourseRef: chi.URLParam(r, "courseRef"),
 		ContentID: chi.URLParam(r, "id"),
 	}
-	fmt.Println("-----------Inside Get------------")
-	fmt.Println("")
-	if err := c.Content.Get(); err != nil {
-		perror.HandleError(w, http.StatusBadRequest, "Error on getting content.", err)
+	// Fetch document from database
+	document, err := course.Get(c.Content)
+	if err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting course lesson", err)
+		return
 	}
+
+	// Check if the document is of the expected type
+	expectedType := reflect.TypeOf(&course.Content{})
+	if !isTypeValid(document, expectedType) {
+		perror.HandleError(w, http.StatusBadRequest, "", fmt.Errorf("document is not of type %s", expectedType))
+		return
+	}
+
+	// Encode the document to JSON and send the response
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(c); err != nil {
+	if err := json.NewEncoder(w).Encode(document.(*course.Content)); err != nil {
 		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
@@ -76,15 +96,25 @@ func (c *Content) Get(w http.ResponseWriter, r *http.Request) {
 func (c *Content) List(w http.ResponseWriter, r *http.Request) {
 	c.Content = &course.Content{
 		CourseRef: chi.URLParam(r, "courseRef"),
+		ContentID: chi.URLParam(r, "id"),
 	}
-	list, err := c.Content.List()
+	documents, err := course.List(c.Content)
 	if err != nil {
-		perror.HandleError(w, http.StatusBadRequest, "Error on getting content list.", err)
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting course content list.", err)
 	}
 
+	// Check if the document is of the expected type
+	expectedType := reflect.TypeOf(&[]course.Content{})
+	if !isTypeValid(documents, expectedType) {
+		perror.HandleError(w, http.StatusBadRequest, "", fmt.Errorf("document is not of type %s", expectedType))
+		return
+	}
+
+	// Encode the documents to JSON and send the response
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(list); err != nil {
+	if err := json.NewEncoder(w).Encode(documents.(*[]course.Content)); err != nil {
 		perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
+		return
 	}
 }
 
@@ -93,8 +123,30 @@ func (c *Content) Delete(w http.ResponseWriter, r *http.Request) {
 		CourseRef: chi.URLParam(r, "courseRef"),
 		ContentID: chi.URLParam(r, "id"),
 	}
-	if err := c.Content.Delete(); err != nil {
+	// Fetch document from database
+	document, err := course.Get(c.Content)
+	if err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on getting course lesson", err)
+		return
+	}
+
+	// Check if the document is of the expected type
+	expectedType := reflect.TypeOf(&course.Content{})
+	if !isTypeValid(document, expectedType) {
+		perror.HandleError(w, http.StatusBadRequest, "", fmt.Errorf("document is not of type %s", expectedType))
+		return
+	}
+	c.Content.LessonRef = document.(*course.Content).LessonRef
+
+	if err := course.Delete(c.Content); err != nil {
 		perror.HandleError(w, http.StatusBadRequest, "Error on deleting content.", err)
 	}
+
+	if err := course.Sync(&course.Lesson{
+		CourseRef: c.Content.CourseRef,
+	}, "$pull", c.Content.LessonRef, "contents", c.ContentID); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on syncing content to lesson", err)
+	}
+
 	w.WriteHeader(http.StatusOK)
 }

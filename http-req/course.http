@@ -46,7 +46,7 @@ Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
 {
-  "price": 500
+  "price": 700
 }
 
 

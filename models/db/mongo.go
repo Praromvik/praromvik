@@ -31,6 +31,7 @@ import (
 	"github.com/praromvik/praromvik/models/db/client"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Mongo struct {
@@ -42,61 +43,72 @@ func (m Mongo) GetDocument(filter interface{}) (*mongo.SingleResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	result := collection.FindOne(context.TODO(), filter)
-	return result, nil
+	return collection.FindOne(context.TODO(), filter), nil
 }
 
-func (m Mongo) AddDocument(data interface{}) error {
-	collection, err := m.getDBCollection()
-	if err != nil {
-		return err
-	}
-	result, err := collection.InsertOne(context.TODO(), data)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Inserted document with _id: %v\n", result.InsertedID)
-	return nil
-}
-
-func (m Mongo) UpdateDocument(filter interface{}, newData interface{}) error {
-	collection, err := m.getDBCollection()
-	if err != nil {
-		return err
-	}
-	result, err := collection.ReplaceOne(context.TODO(), filter, newData)
-	if err != nil {
-		return fmt.Errorf("failed to update document: %v", err)
-	}
-	fmt.Printf("Update Document. Result. MatchedCount:"+
-		" %d, UpsertedCount: %d, ModifiedCount: %d.\n", result.MatchedCount, result.UpsertedCount, result.ModifiedCount)
-	return nil
-}
-
-func (m Mongo) DeleteDocument(filter interface{}) error {
-	collection, err := m.getDBCollection()
-	if err != nil {
-		return err
-	}
-	result, err := collection.DeleteOne(context.TODO(), filter)
-	if err != nil {
-		return fmt.Errorf("failed to delete document: %v", err)
-	}
-	fmt.Printf("Deleted %d documents\n", result.DeletedCount)
-	return nil
-}
-
-func (m Mongo) ListDocument() (*mongo.Cursor, error) {
+func (m Mongo) AddDocument(data interface{}) (*mongo.InsertOneResult, error) {
 	collection, err := m.getDBCollection()
 	if err != nil {
 		return nil, err
 	}
-	cur, err := collection.Find(context.Background(), bson.D{})
+	return collection.InsertOne(context.TODO(), data)
+}
+
+func (m Mongo) UpdateDocument(filter interface{}, newData interface{}) (*mongo.UpdateResult, error) {
+	collection, err := m.getDBCollection()
 	if err != nil {
 		return nil, err
 	}
-	return cur, nil
+	return collection.ReplaceOne(context.TODO(), filter, newData)
+}
 
+func (m Mongo) DeleteDocument(filter interface{}) (*mongo.DeleteResult, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	return collection.DeleteOne(context.TODO(), filter)
+}
+
+func (m Mongo) ListDocuments(filter interface{}) (*mongo.Cursor, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	return collection.Find(context.Background(), filter)
+}
+
+func (m Mongo) CountDocuments(filter interface{}) (int64, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return 0, err
+	}
+	return collection.CountDocuments(context.Background(), filter)
+}
+
+func (m Mongo) BulkWrite(models []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	opts := options.BulkWrite().SetOrdered(false)
+	return collection.BulkWrite(context.Background(), models, opts)
+}
+
+func (m Mongo) FindDistinct(field string, filter interface{}) ([]interface{}, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	return collection.Distinct(context.Background(), field, filter)
+}
+
+func (m Mongo) Aggregate(pipeline interface{}) (*mongo.Cursor, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	return collection.Aggregate(context.Background(), pipeline)
 }
 
 func (m Mongo) getDBCollection() (*mongo.Collection, error) {

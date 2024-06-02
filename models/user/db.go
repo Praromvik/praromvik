@@ -97,13 +97,13 @@ func (u *User) UpdateUserDataToMongo() error {
 		return err
 	}
 	db.MergeStruct(&user, *u)
-	err = mongoDB.UpdateDocument(filter, user)
+	_, err = mongoDB.UpdateDocument(filter, user)
 	return err
 }
 
 func (u *User) AddUserDataToMongo() error {
 	mongoDB := db.Mongo{Namespaces: []db.Namespace{userMongoNamespace}}
-	err := mongoDB.AddDocument(u)
+	_, err := mongoDB.AddDocument(u)
 	return err
 }
 
