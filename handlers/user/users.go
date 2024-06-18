@@ -28,11 +28,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/praromvik/praromvik/models"
+	hutils "github.com/praromvik/praromvik/handlers/utils"
 	"github.com/praromvik/praromvik/models/user"
+	mutils "github.com/praromvik/praromvik/models/utils"
 	"github.com/praromvik/praromvik/pkg/auth"
 	perror "github.com/praromvik/praromvik/pkg/error"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -58,10 +60,10 @@ func (u User) SignUp(w http.ResponseWriter, r *http.Request) {
 		if err := u.HashPassword(); err != nil {
 			perror.HandleError(w, http.StatusBadRequest, "Failed to hash password", err)
 		}
-		if u.Email == models.AdminEmail {
-			u.Role = string(models.Admin)
+		if u.Email == mutils.AdminEmail {
+			u.Role = string(mutils.Admin)
 		} else {
-			u.Role = string(models.Student)
+			u.Role = string(mutils.Student)
 		}
 
 		if err := u.User.AddUserDataToDB(); err != nil {
@@ -98,28 +100,52 @@ func (u User) SignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u User) SignOut(w http.ResponseWriter, r *http.Request) {
-	if err := auth.StoreAuthenticated(w, r, u.User, false); err != nil {
-		perror.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
-		return
+	if r.Method == http.MethodPost {
+		if err := auth.StoreAuthenticated(w, r, u.User, false); err != nil {
+			perror.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
+			return
+		}
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
 	}
 }
 
 func (u User) ProvideRoleToUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
-			perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+	if err := json.NewDecoder(r.Body).Decode(&u.User); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on parsing JSON", err)
+		return
+	}
+
+	if err := u.User.FetchAndSetUUIDFromDB(); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "", err)
+		return
+	}
+
+	if err := u.UpdateUserDataToDB(); err != nil {
+		perror.HandleError(w, http.StatusBadRequest, "Error on update user", err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (u User) Get(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		u.UserName = chi.URLParam(r, "userName")
+		if err := u.GetFromMongo(); err != nil {
+			perror.HandleError(w, http.StatusBadRequest, "Error on getting user", err)
+			return
+		}
+		data, err := hutils.RemovedUUID(u)
+		if err != nil {
+			perror.HandleError(w, http.StatusInternalServerError, "", err)
 			return
 		}
 
-		if err := u.User.FetchAndSetUUIDFromDB(); err != nil {
-			perror.HandleError(w, http.StatusBadRequest, "", err)
-			return
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(data); err != nil {
+			perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
 		}
 
-		if err := u.UpdateUserDataToDB(); err != nil {
-			perror.HandleError(w, http.StatusBadRequest, "Error on Update User", err)
-			return
-		}
 		w.WriteHeader(http.StatusOK)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)

@@ -24,38 +24,33 @@ SOFTWARE.
 
 package course
 
-import (
-	"google.golang.org/genproto/googleapis/type/date"
-)
-
 type Course struct {
-	CourseId           string    `json:"courseId"`
-	Title              string    `json:"title"`
-	Description        string    `json:"description"`
-	Instructors        []string  `json:"instructors"`
-	StartDate          date.Date `json:"startDate"`
-	EndDate            date.Date `json:"endDate"`
-	Duration           int       `json:"duration"` // Duration in week
-	EnrollmentCapacity int       `json:"enrollmentCapacity"`
-	EnrollmentStudents []string  `json:"enrollmentStudents"`
-	Lessons            []Lesson  `json:"lessons"`
+	CourseId    string   `json:"_id" bson:"_id"`
+	Title       string   `json:"title" bson:"title"`
+	Description string   `json:"description" bson:"description"`
+	Instructors []string `json:"instructors" bson:"instructors"`
+	Moderators  []string `json:"moderators" bson:"moderators"`
+	StartDate   string   `json:"startDate" bson:"startDate"`
+	EndDate     string   `json:"endDate" bson:"endDate"`
+	Duration    int      `json:"duration" bson:"duration"` // Duration in week
+	Capacity    int      `json:"capacity" bson:"capacity"`
+	Students    []string `json:"students" bson:"students"`
+	Price       int      `json:"price" bson:"price"`
+	Image       []byte   `json:"image" bson:"-"`
 }
 
 type Lesson struct {
-	LessonId string `json:"lessonId"`
-	Title    string `json:"title"`
-	Content  string `json:"content"`
-	Quizzes  []Quiz `json:"quizzes"`
+	LessonID  string   `json:"_id" bson:"_id"`
+	CourseRef string   `json:"courseRef" bson:"courseRef"`
+	Title     string   `json:"title" bson:"title"`
+	Contents  []string `json:"contents" bson:"contents"`
 }
 
-type Quiz struct {
-	QuizId    string     `json:"quizId"`
-	Questions []Question `json:"questions"`
-}
-
-type Question struct {
-	QuestionId    string   `json:"QuestionId"`
-	Ques          string   `json:"ques"`
-	Options       []string `json:"options"`
-	CorrectOption string   `json:"correctOption"`
+type Content struct {
+	ContentID string `json:"_id" bson:"_id"`
+	CourseRef string `json:"courseRef" bson:"courseRef"`
+	LessonRef string `json:"lessonRef" bson:"lessonRef"`
+	Title     string `json:"title" bson:"title"`
+	Type      string `json:"type" bson:"type"` // video, resource, quiz, lab
+	Data      []byte `json:"data" bson:"data"`
 }
