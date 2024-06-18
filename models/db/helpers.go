@@ -35,16 +35,22 @@ type Namespace struct {
 	Collection string
 }
 
-// Here, You must have to provide Structure kind instead of ptr. Mention that for any unexported field inside of struct will give panic.
+// Here, You must have to provide Structure kind instead of ptr.
 
 func MergeStruct(oldStruct interface{}, newStruct interface{}) {
+	// We're taking pointer as parameter, but we need struct value instead of pointer
+	// therefore [Value.Elem()] gives us struct instead of pointer.
 	oldValue, newValue := reflect.ValueOf(oldStruct).Elem(), reflect.ValueOf(newStruct).Elem()
 	for i := 0; i < oldValue.NumField(); i++ {
 		oldFieldValue, newFieldValue := oldValue.Field(i), newValue.Field(i)
-		if oldFieldValue.Kind() == reflect.Struct {
-			MergeStruct(oldFieldValue.Addr().Interface(), newFieldValue.Interface())
-		} else if !reflect.DeepEqual(newFieldValue.Interface(), reflect.Zero(newFieldValue.Type()).Interface()) {
-			oldFieldValue.Set(newFieldValue)
+		if oldFieldValue.CanSet() {
+			if oldFieldValue.Kind() == reflect.Struct {
+				// At this point we've to pass pointer as parameter, so we convert this struct to pointer.
+				MergeStruct(oldFieldValue.Addr().Interface(), newFieldValue.Addr().Interface())
+			} else if !reflect.DeepEqual(newFieldValue.Interface(), reflect.Zero(newFieldValue.Type()).Interface()) {
+				// [Value.Set] can set value only if field is addressable. we can ensure it by calling [Value.CanSet]
+				oldFieldValue.Set(newFieldValue)
+			}
 		}
 	}
 }
