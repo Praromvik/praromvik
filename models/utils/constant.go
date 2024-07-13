@@ -22,18 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package user
+package utils
 
-import "github.com/praromvik/praromvik/models/utils"
+type RoleType string
 
-type User struct {
-	UserName         string       `json:"userName" bson:"userName"`
-	Certificates     []string     `json:"certificates" bson:"certificates"`
-	EnrolledCourses  []utils.Info `json:"enrolledCourses" bson:"enrolledCourses"`
-	ParticipateExams []utils.Info `json:"participateExams" bson:"participateExams"`
-	Email            string       `json:"email" bson:"email"`
-	Password         string       `json:"password" bson:"password"`
-	Phone            string       `json:"phone" bson:"phone"`
-	Role             string       `json:"role" bson:"role"`
-	UUID             string       `json:"uuid" bson:"uuid"`
-}
+const (
+	Admin      RoleType = "admin"
+	Moderator  RoleType = "moderator"
+	Trainer    RoleType = "trainer"
+	Student    RoleType = "student"
+	None       RoleType = ""
+	AdminEmail          = "praromvik.hq@gmail.com"
+	UUID                = "uuid"
+)
+
+// Constant for Session base Auth
+const (
+	Role          = "role"
+	UserName      = "userName"
+	UserIP        = "userIP"
+	UserAgent     = "userAgent"
+	SessionKey    = "SESSION_KEY"
+	Authenticated = "authenticated"
+)

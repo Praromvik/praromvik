@@ -22,26 +22,56 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package models
+package course
 
-type RoleType string
-
-const (
-	Admin      RoleType = "admin"
-	Moderator  RoleType = "moderator"
-	Trainer    RoleType = "trainer"
-	Student    RoleType = "student"
-	None       RoleType = ""
-	AdminEmail          = "praromvik.hq@gmail.com"
-	UUID                = "uuid"
+import (
+	"github.com/praromvik/praromvik/models/db"
 )
 
-// Constant for Session base Auth
-const (
-	Role          = "role"
-	UserName      = "userName"
-	UserIP        = "userIP"
-	UserAgent     = "userAgent"
-	SessionKey    = "SESSION_KEY"
-	Authenticated = "authenticated"
-)
+type Document interface {
+	GetID() interface{}
+	GetNamespace() db.Namespace
+}
+
+func (c *Course) GetNamespace() db.Namespace {
+	return db.Namespace{
+		Database:   "praromvik",
+		Collection: "courses",
+	}
+}
+
+func (l *Lesson) GetNamespace() db.Namespace {
+	return db.Namespace{
+		Database:   l.CourseRef,
+		Collection: "lessons",
+	}
+}
+
+func (c *Content) GetNamespace() db.Namespace {
+	return db.Namespace{
+		Database:   c.CourseRef,
+		Collection: "contents",
+	}
+}
+
+func (l *Lesson) GetID() interface{} {
+	return l.LessonID
+}
+
+func (c *Course) GetID() interface{} {
+	return c.CourseId
+}
+
+func (c *Content) GetID() interface{} {
+	return c.ContentID
+}
+
+// Another Approach to set Value to pointer.
+//func (c *Course) SetDocument(document interface{}) error {
+//	doc, ok := document.(*Course)
+//	if !ok {
+//		return fmt.Errorf("document is not of type %s", reflect.TypeOf(c))
+//	}
+//	*c = *doc
+//	return nil
+//}

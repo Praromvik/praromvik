@@ -29,8 +29,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/praromvik/praromvik/models"
 	"github.com/praromvik/praromvik/models/db"
+	"github.com/praromvik/praromvik/models/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -87,7 +87,7 @@ func (u *User) ValidateForm() (int, error) {
 
 func (u *User) UpdateUserDataToMongo() error {
 	user := User{}
-	filter := bson.D{{Key: models.UUID, Value: u.UUID}}
+	filter := bson.D{{Key: utils.UUID, Value: u.UUID}}
 	mongoDB := db.Mongo{Namespaces: []db.Namespace{userMongoNamespace}}
 	result, err := mongoDB.GetDocument(filter)
 	if err != nil {
@@ -97,13 +97,13 @@ func (u *User) UpdateUserDataToMongo() error {
 		return err
 	}
 	db.MergeStruct(&user, *u)
-	err = mongoDB.UpdateDocument(filter, user)
+	_, err = mongoDB.UpdateDocument(filter, user)
 	return err
 }
 
 func (u *User) AddUserDataToMongo() error {
 	mongoDB := db.Mongo{Namespaces: []db.Namespace{userMongoNamespace}}
-	err := mongoDB.AddDocument(u)
+	_, err := mongoDB.AddDocument(u)
 	return err
 }
 
@@ -124,9 +124,6 @@ func (u *User) UpdateUserAuthDataToFirestore() error {
 	}
 	db.MergeStruct(&user, *u)
 	authData := getAuthData(user)
-	if err != nil {
-		return err
-	}
 	err = db.Firestore{}.UpdateDocument("users", u.UserName, authData)
 	return err
 }
@@ -150,6 +147,18 @@ func (u *User) FetchAndSetUUIDFromDB() error {
 		return err
 	}
 	u.UUID = user.UUID
+	return nil
+}
+
+func (u *User) GetFromMongo() error {
+	mongoDB := db.Mongo{Namespaces: []db.Namespace{userMongoNamespace}}
+	result, err := mongoDB.GetDocument(bson.D{{Key: "userName", Value: u.UserName}})
+	if err != nil {
+		return err
+	}
+	if err := result.Decode(&u); err != nil {
+		return err
+	}
 	return nil
 }
 

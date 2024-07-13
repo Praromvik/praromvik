@@ -55,20 +55,51 @@ func LoadRoutes() *chi.Mux {
 	router.Route("/course", loadCourseRoutes)
 	return router
 }
-
 func loadUserAuthRoutes(r chi.Router) {
 	userHandler := &user.User{}
-	r.HandleFunc("/signup", userHandler.SignUp)
-	r.HandleFunc("/signin", userHandler.SignIn)
-	r.HandleFunc("/signout", userHandler.SignOut)
+	r.Post("/signup", userHandler.SignUp)
+	r.Post("/signin", userHandler.SignIn)
+	r.Delete("/signout", userHandler.SignOut)
+	r.With(middleware.SecurityMiddleware).Get("/user/{userName}", userHandler.Get)
 }
 
 func loadCourseRoutes(r chi.Router) {
-	courseHandler := &course.Course{}
 	r.Use(middleware.SecurityMiddleware)
-	r.Get("/", courseHandler.List)
-	r.Get("/{id}", courseHandler.GetByID)
-	r.With(middleware.AdminOrModeratorAccess).Post("/", courseHandler.Create)
-	r.With(middleware.AdminOrModeratorAccess).Put("/{id}", courseHandler.UpdateByID)
-	r.With(middleware.AdminAccess).Delete("/{id}", courseHandler.DeleteByID)
+	r.Route("/{courseRef}/lesson", loadLessonRoutes)
+	r.Route("/{courseRef}/content", loadContentRoutes)
+
+	handler := &course.Course{}
+	r.Get("/list", handler.List)
+	r.Get("/{id}", handler.Get)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AdminOrModeratorAccess)
+		r.Post("/", handler.Create)
+		r.Put("/{id}", handler.Update)
+	})
+	//Require admin access
+	r.With(middleware.AdminAccess).Delete("/{id}", handler.Delete)
+}
+
+func loadLessonRoutes(r chi.Router) {
+	handler := &course.Lesson{}
+	r.Get("/list", handler.List)
+	r.Get("/{id}", handler.Get)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AdminOrModeratorAccess)
+		r.Post("/", handler.Create)
+	})
+	//Require admin access
+	r.With(middleware.AdminAccess).Delete("/{id}", handler.Delete)
+}
+
+func loadContentRoutes(r chi.Router) {
+	handler := &course.Content{}
+	r.Get("/list", handler.List)
+	r.Get("/{id}", handler.Get)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AdminOrModeratorAccess)
+		r.Post("/", handler.Create)
+	})
+	//Require admin access
+	r.With(middleware.AdminAccess).Delete("/{id}", handler.Delete)
 }

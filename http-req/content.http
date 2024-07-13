@@ -1,0 +1,60 @@
+###
+# SignIn endpoint
+POST http://localhost:3030/signin
+Content-Type: application/json
+
+{
+  "userName": "admin",
+  "password": "itiswhatitis"
+}
+
+###
+# Create Content 1
+POST http://localhost:3030/course/advanced-golang/content
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json
+
+{
+  "_id": "course-introduction",
+  "courseRef":"advanced-golang",
+  "lessonRef": "introduction",
+  "title":"Introduction of Golang",
+  "type": "video"
+}
+
+
+
+###
+# Create Content 2
+POST http://localhost:3030/course/advanced-golang/content
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json
+
+{
+  "_id": "refresher-lab-01",
+  "courseRef":"advanced-golang",
+  "lessonRef": "introduction",
+  "title":"Refreshment Lab 01",
+  "type": "Lab"
+}
+
+
+###
+# Get
+GET http://localhost:3030/course/advanced-golang/content/course-introduction
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json
+
+
+###
+# List
+GET http://localhost:3030/course/advanced-golang/content/list
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json
+
+
+###
+# Get
+DELETE http://localhost:3030/course/advanced-golang/content/refresher-lab-01
+Authorization: Bearer {{PRAROMVIK}}
+Content-Type: application/json

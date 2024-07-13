@@ -29,7 +29,9 @@ import (
 	"fmt"
 
 	"github.com/praromvik/praromvik/models/db/client"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Mongo struct {
@@ -41,35 +43,72 @@ func (m Mongo) GetDocument(filter interface{}) (*mongo.SingleResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	result := collection.FindOne(context.TODO(), filter)
-	return result, nil
+	return collection.FindOne(context.TODO(), filter), nil
 }
 
-func (m Mongo) AddDocument(data interface{}) error {
+func (m Mongo) AddDocument(data interface{}) (*mongo.InsertOneResult, error) {
 	collection, err := m.getDBCollection()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	result, err := collection.InsertOne(context.TODO(), data)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Inserted document with _id: %v\n", result.InsertedID)
-	return nil
+	return collection.InsertOne(context.TODO(), data)
 }
 
-func (m Mongo) UpdateDocument(filter interface{}, newData interface{}) error {
+func (m Mongo) UpdateDocument(filter interface{}, newData interface{}) (*mongo.UpdateResult, error) {
 	collection, err := m.getDBCollection()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	result, err := collection.ReplaceOne(context.TODO(), filter, newData)
+	return collection.ReplaceOne(context.TODO(), filter, newData)
+}
+
+func (m Mongo) DeleteDocument(filter interface{}) (*mongo.DeleteResult, error) {
+	collection, err := m.getDBCollection()
 	if err != nil {
-		return fmt.Errorf("failed to update document: %v", err)
+		return nil, err
 	}
-	fmt.Printf("Update Document. Result. MatchedCount:"+
-		" %d, UpsertedCount: %d, ModifiedCount: %d.\n", result.MatchedCount, result.UpsertedCount, result.ModifiedCount)
-	return nil
+	return collection.DeleteOne(context.TODO(), filter)
+}
+
+func (m Mongo) ListDocuments(filter interface{}) (*mongo.Cursor, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	return collection.Find(context.Background(), filter)
+}
+
+func (m Mongo) CountDocuments(filter interface{}) (int64, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return 0, err
+	}
+	return collection.CountDocuments(context.Background(), filter)
+}
+
+func (m Mongo) BulkWrite(models []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	opts := options.BulkWrite().SetOrdered(false)
+	return collection.BulkWrite(context.Background(), models, opts)
+}
+
+func (m Mongo) FindDistinct(field string, filter interface{}) ([]interface{}, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	return collection.Distinct(context.Background(), field, filter)
+}
+
+func (m Mongo) Aggregate(pipeline interface{}) (*mongo.Cursor, error) {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return nil, err
+	}
+	return collection.Aggregate(context.Background(), pipeline)
 }
 
 func (m Mongo) getDBCollection() (*mongo.Collection, error) {
@@ -82,4 +121,40 @@ func (m Mongo) getDBCollection() (*mongo.Collection, error) {
 		collection = db.Collection(val.Collection)
 	}
 	return collection, nil
+}
+
+func (m Mongo) Sync(query string, id string, bsonName string, elementId string) error {
+	collection, err := m.getDBCollection()
+	if err != nil {
+		return err
+	}
+	// Check if the field is null (unset), and if so, initialize it as an empty array
+	var doc bson.M
+	err = collection.FindOne(context.TODO(), bson.M{"_id": id}).Decode(&doc)
+	if err != nil {
+		return fmt.Errorf("failed to find document: %v", err)
+	}
+
+	if doc[bsonName] == nil {
+		// Initialize the field as an empty array
+		_, err = collection.UpdateOne(
+			context.TODO(),
+			bson.M{"_id": id},
+			bson.M{"$set": bson.M{bsonName: []string{elementId}}},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to initialize field: %v", err)
+		}
+	} else {
+		// Field is not null, proceed with pushing the element
+		_, err = collection.UpdateOne(
+			context.TODO(),
+			bson.M{"_id": id},
+			bson.M{query: bson.M{bsonName: elementId}},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to sync document: %v", err)
+		}
+	}
+	return err
 }
