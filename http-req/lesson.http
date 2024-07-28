@@ -1,6 +1,6 @@
 ###
 # SignIn endpoint
-POST http://localhost:3030/signin
+POST http://localhost:3030/api/signin
 Content-Type: application/json
 
 {
@@ -11,7 +11,7 @@ Content-Type: application/json
 
 ###
 # Create Lesson 1
-POST http://localhost:3030/course/advanced-golang/lesson
+POST http://localhost:3030/api/course/advanced-golang/lesson
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
@@ -21,7 +21,7 @@ Content-Type: application/json
 
 ###
 # Create Lesson 2
-POST http://localhost:3030/course/advanced-golang/lesson
+POST http://localhost:3030/api/course/advanced-golang/lesson
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
@@ -32,11 +32,11 @@ Content-Type: application/json
 
 ###
 # Get Lesson 1
-GET http://localhost:3030/course/advanced-golang/lesson/concurrency
+GET http://localhost:3030/api/course/advanced-golang/lesson/concurrency
 Authorization: Bearer {{PRAROMVIK}}
 
 
 ###
 # List
-GET http://localhost:3030/course/advanced-golang/lesson/list
+GET http://localhost:3030/api/course/advanced-golang/lesson/list
 Authorization: Bearer {{PRAROMVIK}}

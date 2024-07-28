@@ -50,17 +50,17 @@ func LoadRoutes() *chi.Mux {
 	router.Group(func(r chi.Router) {
 		loadUserAuthRoutes(r)
 	})
-	router.With(middleware.AdminAccess).Post("/role", user.User{}.ProvideRoleToUser)
+	router.With(middleware.AdminAccess).Post("/api/role", user.User{}.ProvideRoleToUser)
 
-	router.Route("/course", loadCourseRoutes)
+	router.Route("/api/course", loadCourseRoutes)
 	return router
 }
 func loadUserAuthRoutes(r chi.Router) {
 	userHandler := &user.User{}
-	r.Post("/signup", userHandler.SignUp)
-	r.Post("/signin", userHandler.SignIn)
-	r.Delete("/signout", userHandler.SignOut)
-	r.With(middleware.SecurityMiddleware).Get("/user/{userName}", userHandler.Get)
+	r.Post("/api/signup", userHandler.SignUp)
+	r.Post("/api/signin", userHandler.SignIn)
+	r.Delete("/api/signout", userHandler.SignOut)
+	r.With(middleware.SecurityMiddleware).Get("/api/user/{userName}", userHandler.Get)
 }
 
 func loadCourseRoutes(r chi.Router) {
