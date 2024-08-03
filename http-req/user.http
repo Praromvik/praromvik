@@ -1,5 +1,5 @@
 # Sign up endpoint
-POST http://localhost:3030/signup
+POST http://localhost:3030/api/signup
 Content-Type: application/json
 
 {
@@ -11,19 +11,19 @@ Content-Type: application/json
 
 ###
 # SignIn endpoint
-POST http://localhost:3030/signin
+POST http://localhost:3030/api/signin
 Content-Type: application/json
 
 {
-  "userName": "admin",
-  "password": "itiswhatitis"
+  "userName": "student-1",
+  "password": "123"
 }
 
 > {% client.global.set("PRAROMVIK", response.body.json.token); %}
 
 
 ###
-POST http://localhost:3030/user/upload
+POST http://localhost:3030/api/user/upload
 Content-Type: multipart/form-data
 
 {

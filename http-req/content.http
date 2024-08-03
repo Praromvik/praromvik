@@ -1,6 +1,6 @@
 ###
 # SignIn endpoint
-POST http://localhost:3030/signin
+POST http://localhost:3030/api/signin
 Content-Type: application/json
 
 {
@@ -10,7 +10,7 @@ Content-Type: application/json
 
 ###
 # Create Content 1
-POST http://localhost:3030/course/advanced-golang/content
+POST http://localhost:3030/api/course/advanced-golang/content
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
@@ -26,7 +26,7 @@ Content-Type: application/json
 
 ###
 # Create Content 2
-POST http://localhost:3030/course/advanced-golang/content
+POST http://localhost:3030/api/course/advanced-golang/content
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
@@ -41,20 +41,20 @@ Content-Type: application/json
 
 ###
 # Get
-GET http://localhost:3030/course/advanced-golang/content/course-introduction
+GET http://localhost:3030/api/course/advanced-golang/content/course-introduction
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
 
 ###
 # List
-GET http://localhost:3030/course/advanced-golang/content/list
+GET http://localhost:3030/api/course/advanced-golang/content/list
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
 
 ###
 # Get
-DELETE http://localhost:3030/course/advanced-golang/content/refresher-lab-01
+DELETE http://localhost:3030/api/course/advanced-golang/content/refresher-lab-01
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json

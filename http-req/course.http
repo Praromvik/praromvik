@@ -1,6 +1,6 @@
 ###
 # SignIn endpoint
-POST http://localhost:3030/signin
+POST http://localhost:3030/api/signin
 Content-Type: application/json
 
 {
@@ -12,7 +12,7 @@ Content-Type: application/json
 
 ###
 # Create Course 1
-POST http://localhost:3030/course
+POST http://localhost:3030/api/course
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
@@ -24,7 +24,7 @@ Content-Type: application/json
 
 ###
 # Create Course 2
-POST http://localhost:3030/course
+POST http://localhost:3030/api/course
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
@@ -36,12 +36,12 @@ Content-Type: application/json
 
 ###
 # Get Course
-GET http://localhost:3030/course/prometheus-certified-associate-pca
+GET http://localhost:3030/api/course/prometheus-certified-associate-pca
 Authorization: Bearer {{PRAROMVIK}}
 
 ###
 # Update Course
-PUT http://localhost:3030/course/prometheus-certified-associate-pca
+PUT http://localhost:3030/api/course/prometheus-certified-associate-pca
 Authorization: Bearer {{PRAROMVIK}}
 Content-Type: application/json
 
@@ -52,13 +52,13 @@ Content-Type: application/json
 
 ###
 # Delete Course
-DELETE http://localhost:3030/course/advanced-golang
+DELETE http://localhost:3030/api/course/advanced-golang
 Authorization: Bearer {{PRAROMVIK}}
 
 ###
 # List Course
-GET http://localhost:3030/course/list
+GET http://localhost:3030/api/course/list
 Authorization: Bearer {{PRAROMVIK}}
 
 
-GET http://localhost:3030/course/advanced-golang/introduction/quiz-1/
+GET http://localhost:3030/api/course/advanced-golang/introduction/quiz-1/
