@@ -93,6 +93,15 @@ func (u User) SignIn(w http.ResponseWriter, r *http.Request) {
 			perror.HandleError(w, http.StatusInternalServerError, "failed to store session token", err)
 			return
 		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(user.User{
+			UserName: u.User.UserName,
+			Email:    u.User.Email,
+			Role:     u.User.Role,
+		}); err != nil {
+			perror.HandleError(w, http.StatusInternalServerError, "Error on encoding JSON response", err)
+		}
 		w.WriteHeader(http.StatusOK)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
